@@ -1,0 +1,29 @@
+#####################################################
+#             FULLSCAN VERSION - ISCAS 89           #
+#          Converted by Saravanan Padmanaban        #
+#             Southern Illinois University          #
+#                 Carbondale, IL 62901              #
+#####################################################
+INPUT(1)
+INPUT(2)
+INPUT(3)
+INPUT(4)
+INPUT(5)
+INPUT(6)
+INPUT(7)
+
+OUTPUT(12)
+OUTPUT(15)
+OUTPUT(16)
+OUTPUT(17)
+
+8 = NOT(1)
+9 = AND(8, 6)
+10 = NOR(2, 7)
+11 = OR(4, 9)
+12 = NOR(3, 10)
+13 = OR(10, 9)
+14 = NAND(11, 13)
+15 = NOR(5, 14)
+16 = NOT(15)
+17 = NOR(8, 15)
