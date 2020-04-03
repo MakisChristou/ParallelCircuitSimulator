@@ -1,4 +1,4 @@
-##Simple event driven fault simulator
+## Simple event driven fault simulator
 
 ## Install boost libraries
 

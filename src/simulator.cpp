@@ -385,7 +385,9 @@ int main(int argc, char *argv[]){
 	for(auto& line : Lines){
 		
 			//Print Line for debugging									
+			#ifdef VERBOSE
 			std::cout<<line<<std::endl;
+			#endif			
 
 			if(line.substr(0,5) == "INPUT"){
 
