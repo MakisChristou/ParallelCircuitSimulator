@@ -16,7 +16,7 @@
 #include <chrono>
 
 //If you want verbose output uncomment the following line
-//#define VERBOSE
+#define VERBOSE
 
 // Prints correct usage
 int print_usage(){
@@ -114,39 +114,60 @@ struct VertexData{
 	int output; //one output
 };
 
-// A utility function to add an edge in an undirected graph. 
+// A utility function to add an edge in a directed graph. 
 void addEdge(std::vector<int> adj[], int u, int v){ 
     adj[u].push_back(v); 
 } 
-  
+
+// A utility function to delete an edge in a directed graph. 
+void deleteEdge(std::vector<int> adj[], int u, int v){ 
+	
+    //adj[u].push_back(v); 
+		int index = 0;
+		
+		for(auto& entry : adj[u]){
+			if(entry == v){
+				#ifdef VERBOSE
+				std::cout<<"\n";
+				std::cout << "Deleting edge " << u << " -> " << v << std::endl;
+				#endif
+				break;
+			}
+			index++;
+		}
+
+	adj[u].erase(adj[u].begin()+index);
+		
+} 
+   
 // A utility function to print the adjacency list representation of graph 
-void printGraph(std::vector<int> adj[], int V, struct VertexData Vertices_Array[]){ 
-    for (int v = 0; v < V; ++v) 
+void printGraph(std::vector<int> adj[], std::vector <struct VertexData> Vertices_Vector){ 
+    for (int v = 0; v < Vertices_Vector.size(); ++v) 
     { 
         std::cout << "\n Adjacency list of vertex "
-             << Vertices_Array[v].component_name << " "<<v <<"\n head "; 
+             << Vertices_Vector[v].component_name << " "<<v <<"\n head "; 
         for (auto x : adj[v]){ 
-           std::cout << "-> " << Vertices_Array[x].component_name << " " << x ;
+           std::cout << "-> " << Vertices_Vector[x].component_name << " " << x ;
 				}
         printf("\n"); 
     } 
 } 
 
 // Prints all vertices
-void printVertexArray(struct VertexData Vertices_Array[], int V){
+void printVertexVector(std::vector <struct VertexData> Vertices_Vector){
 	
 	std::cout	<< "---- Vertices ----\n";
 
-	for (int i = 0; i < V; i++) 
+	for (auto& vertex : Vertices_Vector) 
   { 
-		std::cout << Vertices_Array[i].component_id << " | " << Vertices_Array[i].component_name << " | " << " in: ";
+		std::cout << vertex.component_id << " | " << vertex.component_name << " | " << " in: ";
 
 		//Itterate through inputs
-		for(auto& input : Vertices_Array[i].inputs){
+		for(auto& input : vertex.inputs){
 			std::cout << input << " ";			
 		}
 		
-		std::cout << " | " << Vertices_Array[i].output << std::endl;
+		std::cout << " | " << vertex.output << std::endl;
 
 	}
 	std::cout	<< "------------------\n";
@@ -207,25 +228,25 @@ struct VertexData AddToGraph(std::string line, int index, std::vector<int> adj[]
 }
 
 // Print Graphviz
-void printGraphviz(std::vector<int> adj[], int V, struct VertexData Vertices_Array[]){ 
+void printGraphviz(std::vector<int> adj[], std::vector <struct VertexData> Vertices_Vector){ 
 
 	std::ofstream myfile;
   myfile.open ("netlist.dot");
 	
 	myfile << "digraph {\n";
 
-	for(int i = 0; i < V; i++){
+	for(int i = 0; i < Vertices_Vector.size(); i++){
 		
-		struct VertexData vertex = Vertices_Array[i];
+		struct VertexData vertex = Vertices_Vector[i];
 
 		myfile << vertex.component_id << " [label=\""<<vertex.component_name<<" "<<vertex.component_id<<"\",shape=circle];\n";
 
 	}
 	
-	for (int v = 0; v < V; ++v) 
+	for (int v = 0; v < Vertices_Vector.size(); ++v) 
   { 
     for (auto x : adj[v]){ 
-    	myfile << v << " -> " << x << ";\n";
+    	myfile << v << " -> " << x << "[label=\""<<Vertices_Vector[v].output << "\"];\n";
 		}
   } 
 
@@ -237,36 +258,12 @@ void printGraphviz(std::vector<int> adj[], int V, struct VertexData Vertices_Arr
 
 }
 
-
 //Main Function
 int main(int argc, char *argv[]){
 	
 	//Start timer	
 	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 
-	/*	
-	//Graph Test
-	int V = 5; 
-
-	//Array that holds the data of each vertex
-	struct VertexData Vertices_Array[V];
-		
-	//Graph has the relationships between nodes
-	//Vertices_Array has the data of each node
-
-  std::vector<int> adj[V]; 
-  addEdge(adj, 0, 1); 
-  addEdge(adj, 0, 4); 
-  addEdge(adj, 1, 2); 
-  addEdge(adj, 1, 3); 
-  addEdge(adj, 1, 4); 
-  addEdge(adj, 2, 3); 
-  addEdge(adj, 3, 4); 
-  //printGraph(adj, V);	
-	*/
-
-
-	
 	// Opens the input file
  	std::ifstream bench_file;
 	std::ifstream input_file;
@@ -285,7 +282,10 @@ int main(int argc, char *argv[]){
 	}else if(argc == 2){
 		print_usage();
 		return -1;	
-	}else if(argc == 3){		
+
+	}
+	//One cli argument
+	else if(argc == 3){		
 
 		if((std::string)argv[1] == "-C"){
 			file_path = argv[2];
@@ -293,7 +293,7 @@ int main(int argc, char *argv[]){
 		
 	}
 	
-	//
+	//Two cli arguments
 	else if(argc == 5){
 
 		if((std::string)argv[1] == "-C"){
@@ -336,7 +336,6 @@ int main(int argc, char *argv[]){
 			std::cout<<"Not Implemented yet!"<<std::endl;
 			return -1;
 		}
-
 	}
 
   
@@ -347,10 +346,10 @@ int main(int argc, char *argv[]){
   std::stringstream stream; //for "prints"
 
   //Declare file for algorithm1 output
-  std::ofstream myfile1;
+  //std::ofstream myfile1;
 
 	//Output file
-	myfile1.open ("output");
+	//myfile1.open ("output");
 
 	std::string current_line;
 	
@@ -410,11 +409,14 @@ int main(int argc, char *argv[]){
 	//Declare Graph
 	int V = Lines.size(); 
 	
-	//Vertex data 
-	struct VertexData Vertices_Array[V];
+	//Vertex Data	
+	std::vector<struct VertexData> Vertices_Vector;
 	
 	//Graph datastructure
   std::vector<int> adj[V]; 
+
+
+
 	
 	//Reinit index		
 	index = 0;
@@ -432,8 +434,9 @@ int main(int argc, char *argv[]){
 				//std::cout<<line.substr(0,5)<<std::endl;
 				INPUT++;
 				
-				Vertices_Array[index] = AddToGraph(line,index,adj,line.substr(0,5));
-														
+
+				Vertices_Vector.push_back(AddToGraph(line,index,adj,line.substr(0,5)));	
+
 			}
 
 
@@ -442,7 +445,9 @@ int main(int argc, char *argv[]){
 				
 				//std::cout<<line.substr(0,6)<<std::endl;
 				OUTPUT++;
-				Vertices_Array[index] = AddToGraph(line,index,adj,line.substr(0,6));
+
+				
+				Vertices_Vector.push_back(AddToGraph(line,index,adj,line.substr(0,6)));	
 
 				
 			}
@@ -458,8 +463,9 @@ int main(int argc, char *argv[]){
 				
 					//std::cout<<line.substr(pos,4)<<std::endl;
 					NAND++;
-					Vertices_Array[index] = AddToGraph(line,index,adj,line.substr(pos,4));
-				
+
+					Vertices_Vector.push_back(AddToGraph(line,index,adj,line.substr(pos,4)));	
+
 
 				}
 
@@ -468,7 +474,8 @@ int main(int argc, char *argv[]){
 				
 					//std::cout<<line.substr(pos,3)<<std::endl;
 					AND++;
-					Vertices_Array[index] = AddToGraph(line,index,adj,line.substr(pos,3));
+
+					Vertices_Vector.push_back(AddToGraph(line,index,adj,line.substr(pos,3)));	
 
 
 				}
@@ -478,7 +485,8 @@ int main(int argc, char *argv[]){
 				
 					//std::cout<<line.substr(pos,3)<<std::endl;
 					NOR++;
-					Vertices_Array[index] = AddToGraph(line,index,adj,line.substr(pos,3));
+
+					Vertices_Vector.push_back(AddToGraph(line,index,adj,line.substr(pos,3)));	
 
 
 				}
@@ -488,8 +496,8 @@ int main(int argc, char *argv[]){
 				
 					//std::cout<<line.substr(pos,2)<<std::endl;
 					OR++;
-					Vertices_Array[index] = AddToGraph(line,index,adj,line.substr(pos,2));
 
+					Vertices_Vector.push_back(AddToGraph(line,index,adj,line.substr(pos,2)));	
 
 				}
 
@@ -498,7 +506,8 @@ int main(int argc, char *argv[]){
 				
 					//std::cout<<line.substr(pos,4)<<std::endl;
 					BUFF++;
-					Vertices_Array[index] = AddToGraph(line,index,adj,line.substr(pos,4));
+
+					Vertices_Vector.push_back(AddToGraph(line,index,adj,line.substr(pos,4)));	
 
 
 				}
@@ -509,7 +518,8 @@ int main(int argc, char *argv[]){
 				
 					//std::cout<<line.substr(pos,3)<<std::endl;
 					NOT++;
-					Vertices_Array[index] = AddToGraph(line,index,adj,line.substr(pos,3));
+
+					Vertices_Vector.push_back(AddToGraph(line,index,adj,line.substr(pos,3)));	
 
 
 				}
@@ -522,23 +532,24 @@ int main(int argc, char *argv[]){
 	#ifdef VERBOSE
 	netlist_stats(index,NAND,AND,OR,NOR,NOT,BUFF,INPUT,OUTPUT);
 	
-	//Print Vertices in stdout
-	printVertexArray(Vertices_Array,V);
-		
+	//Print Vertices in stdout (std::vector)	
+	printVertexVector(Vertices_Vector);
 	#endif
+	
 
+	//Construct Actual Graph (G1)
 	//For each component
-	for(auto& vertex : Vertices_Array){
+	for(auto& vertex : Vertices_Vector){
 	
-		//std::cout <<vertex.component_name << std::endl;
-	
+		//std::cout <<vertex.component_name << std::endl;	
+
 		if(vertex.component_name != "INPUT"){		
 
 			//For each component input
 			for(auto& input : vertex.inputs){
 				
 				//Find which components have the input as output
-				for(auto& vertexx : Vertices_Array){
+				for(auto& vertexx : Vertices_Vector){
 					
 					if(vertexx.output == input){
 						
@@ -553,14 +564,101 @@ int main(int argc, char *argv[]){
 	
 	#ifdef VERBOSE		
 	//Print Netlist
-	printGraph(adj,V,Vertices_Array);
+	printGraph(adj,Vertices_Vector);
 	
 	//Write Graphviz file
-	printGraphviz(adj,V,Vertices_Array);	
+	printGraphviz(adj,Vertices_Vector);	
 	#endif
 	
+	//Graph is now G1
 
+	//This portion of the code will convert it to G2
+
+	//Algorithm Steps
+
+	//1. Itterate through all components
+
+	//2. If a component's output is connected to > 2 components
+
+	//3. Delete edges from component to other components
+	
+	//4. Create new vertices (as many as the component's connected outputs)
+
+	//5. Connect component -> new_vertice -> other_component (for all components that our component was conncted to via it's output) 
+
+	//Save edges that will be deleted from graph	
+	std::vector<std::pair < int, int > > saved_edges;
+
+	index = 0;
+	for(auto& vertex_neighbours : adj){
 		
+		if(vertex_neighbours.size() > 1){
+
+			std::cout<<"\n Vertex "<< Vertices_Vector[index].component_id << " has "<<vertex_neighbours.size()<<" outputs" <<std::endl;
+
+
+			for(auto& neighbour : vertex_neighbours){
+
+				//save the edges
+				std::pair < int, int > edge_pair;
+				edge_pair.first = Vertices_Vector[index].component_id;
+				edge_pair.second = neighbour;
+				saved_edges.push_back(edge_pair);
+									
+			}
+	
+		}
+
+		index++;
+	}	
+		
+	#ifdef VERBOSE
+	std::cout << "\nSaved Edge Pairs\n";
+	#endif
+
+	int number = 0;	
+
+	index = Vertices_Vector.size();
+
+	for(auto& saved_pair : saved_edges){
+	
+		#ifdef VERBOSE	
+		std::cout << "\n" << saved_pair.first << " -> " << saved_pair.second << std::endl;
+		#endif
+
+		//Delete edge
+		deleteEdge(adj,saved_pair.first,saved_pair.second);
+
+		//Create new vertex
+		struct VertexData stem;
+
+		stem.component_id = index;
+		stem.component_name = Vertices_Vector[saved_pair.first].component_name + "" + std::to_string(number);
+		stem.inputs.push_back(saved_pair.first);
+		stem.output = saved_pair.second;		
+		
+
+		#ifdef VERBOSE
+		std::cout << stem.component_id << " - " << stem.component_name << std::endl;
+
+
+		#endif
+
+		Vertices_Vector.push_back(stem);
+			
+	
+		
+
+		addEdge(adj,saved_pair.first,index);
+		addEdge(adj,index,saved_pair.second);
+
+		//Add 2 edges	
+
+
+		number++;
+		index++;
+	}
+
 
 	//End time
 	std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
