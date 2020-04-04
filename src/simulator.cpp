@@ -18,6 +18,11 @@
 //If you want verbose output uncomment the following line
 #define VERBOSE
 
+
+//If you want G2 graph instead of G1 uncomment the following line
+#define G2
+
+
 // Prints correct usage
 int print_usage(){
 	std::cout<<"Usage: simulator [-C <bench_path>] [-I <input_path>] [-T <time>]\n";
@@ -115,12 +120,12 @@ struct VertexData{
 };
 
 // A utility function to add an edge in a directed graph. 
-void addEdge(std::vector<int> adj[], int u, int v){ 
+void addEdge(std::vector<std::vector<int>>& adj, int u, int v){ 
     adj[u].push_back(v); 
 } 
 
 // A utility function to delete an edge in a directed graph. 
-void deleteEdge(std::vector<int> adj[], int u, int v){ 
+void deleteEdge(std::vector<std::vector<int>>& adj, int u, int v){ 
 	
     //adj[u].push_back(v); 
 		int index = 0;
@@ -141,7 +146,7 @@ void deleteEdge(std::vector<int> adj[], int u, int v){
 } 
    
 // A utility function to print the adjacency list representation of graph 
-void printGraph(std::vector<int> adj[], std::vector <struct VertexData> Vertices_Vector){ 
+void printGraph(std::vector<std::vector<int>>& adj, std::vector <struct VertexData> Vertices_Vector){ 
     for (int v = 0; v < Vertices_Vector.size(); ++v) 
     { 
         std::cout << "\n Adjacency list of vertex "
@@ -176,7 +181,7 @@ void printVertexVector(std::vector <struct VertexData> Vertices_Vector){
 }
 
 // Adds gate to Vertex Matrix
-struct VertexData AddToGraph(std::string line, int index, std::vector<int> adj[], std::string component){
+struct VertexData AddToGraph(std::string line, int index, std::vector<std::vector<int>>& adj, std::string component){
 
 	std::vector<std::string> IO =  get_edge(line);
 
@@ -228,7 +233,7 @@ struct VertexData AddToGraph(std::string line, int index, std::vector<int> adj[]
 }
 
 // Print Graphviz
-void printGraphviz(std::vector<int> adj[], std::vector <struct VertexData> Vertices_Vector){ 
+void printGraphviz(std::vector<std::vector<int>>& adj, std::vector <struct VertexData> Vertices_Vector){ 
 
 	std::ofstream myfile;
   myfile.open ("netlist.dot");
@@ -239,7 +244,7 @@ void printGraphviz(std::vector<int> adj[], std::vector <struct VertexData> Verti
 		
 		struct VertexData vertex = Vertices_Vector[i];
 
-		myfile << vertex.component_id << " [label=\""<<vertex.component_name<<" "<<vertex.component_id<<"\",shape=circle];\n";
+		myfile << vertex.component_id << " [label=\""<<vertex.component_name<<"-"<<vertex.component_id<<"\",shape=circle];\n";
 
 	}
 	
@@ -413,9 +418,9 @@ int main(int argc, char *argv[]){
 	std::vector<struct VertexData> Vertices_Vector;
 	
 	//Graph datastructure
-  std::vector<int> adj[V]; 
+  //std::vector<int> adj[V]; 
 
-
+	std::vector<std::vector<int>> adj(V);
 
 	
 	//Reinit index		
@@ -568,6 +573,7 @@ int main(int argc, char *argv[]){
 	
 	//Write Graphviz file
 	printGraphviz(adj,Vertices_Vector);	
+
 	#endif
 	
 	//Graph is now G1
@@ -585,7 +591,9 @@ int main(int argc, char *argv[]){
 	//4. Create new vertices (as many as the component's connected outputs)
 
 	//5. Connect component -> new_vertice -> other_component (for all components that our component was conncted to via it's output) 
-
+	
+	#ifdef G2	
+	
 	//Save edges that will be deleted from graph	
 	std::vector<std::pair < int, int > > saved_edges;
 
@@ -594,8 +602,9 @@ int main(int argc, char *argv[]){
 		
 		if(vertex_neighbours.size() > 1){
 
+			#ifdef VERBOSE
 			std::cout<<"\n Vertex "<< Vertices_Vector[index].component_id << " has "<<vertex_neighbours.size()<<" outputs" <<std::endl;
-
+			#endif
 
 			for(auto& neighbour : vertex_neighbours){
 
@@ -620,6 +629,7 @@ int main(int argc, char *argv[]){
 
 	index = Vertices_Vector.size();
 
+	//Converts Graph from G1 to G2
 	for(auto& saved_pair : saved_edges){
 	
 		#ifdef VERBOSE	
@@ -633,32 +643,43 @@ int main(int argc, char *argv[]){
 		struct VertexData stem;
 
 		stem.component_id = index;
-		stem.component_name = Vertices_Vector[saved_pair.first].component_name + "" + std::to_string(number);
+		stem.component_name = Vertices_Vector[saved_pair.first].component_name + "s";
 		stem.inputs.push_back(saved_pair.first);
 		stem.output = saved_pair.second;		
 		
 
 		#ifdef VERBOSE
 		std::cout << stem.component_id << " - " << stem.component_name << std::endl;
-
-
 		#endif
 
 		Vertices_Vector.push_back(stem);
 			
-	
-		
+		std::vector<int> empty_vector;
 
+		adj.push_back(empty_vector);	
+
+		//Add 2 edges
 		addEdge(adj,saved_pair.first,index);
 		addEdge(adj,index,saved_pair.second);
 
-		//Add 2 edges	
-
-
+			
 		number++;
 		index++;
 	}
 
+	
+	#ifdef VERBOSE		
+	//Print Netlist
+	printGraph(adj,Vertices_Vector);
+	
+	//Write Graphviz file
+	printGraphviz(adj,Vertices_Vector);	
+
+	//Print Vertices in stdout (std::vector)	
+	printVertexVector(Vertices_Vector);
+	#endif
+
+	#endif //G2
 
 	//End time
 	std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
