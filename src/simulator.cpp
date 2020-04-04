@@ -13,14 +13,14 @@
 #include <utility>
 #include <list> 
 #include <stack> 
+#include <chrono>
 
 //If you want verbose output uncomment the following line
 //#define VERBOSE
 
-
 // Prints correct usage
 int print_usage(){
-	std::cout<<"Usage: simulator [-C <bench_path>] [-I <input_path>] [-T <num_threads>]\n";
+	std::cout<<"Usage: simulator [-C <bench_path>] [-I <input_path>] [-T <time>]\n";
 	return 0;
 }
 
@@ -238,10 +238,12 @@ void printGraphviz(std::vector<int> adj[], int V, struct VertexData Vertices_Arr
 }
 
 
-
 //Main Function
 int main(int argc, char *argv[]){
-		
+	
+	//Start timer	
+	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+
 	/*	
 	//Graph Test
 	int V = 5; 
@@ -272,6 +274,9 @@ int main(int argc, char *argv[]){
 	//User Arguments
 	std::string file_path;
 	std::string input_path;
+
+	int time_choice = 2; //default is ms
+	bool show_time = false;
 	
 	//Argument handling
 	if(argc == 1){
@@ -285,20 +290,53 @@ int main(int argc, char *argv[]){
 		if((std::string)argv[1] == "-C"){
 			file_path = argv[2];
 		}
-		else if((std::string)argv[1] == "-I"){
-			input_path = argv[2];
-		}
-		else if((std::string)argv[1] == "-T"){
-			std::cout<<"Not Implemented yet!"<<std::endl;
-			return -1;
+		
+	}
+	
+	//
+	else if(argc == 5){
+
+		if((std::string)argv[1] == "-C"){
+			file_path = argv[2];
 		}
 
-	//Any other number of arguments
-	}else{
+		if((std::string)argv[3] == "-T"){
+			show_time = true;
+		
+			if((std::string)argv[4] == "ns"){
+				time_choice = 0;
+			}
+	
+			if((std::string)argv[4] == "us"){
+				time_choice = 1;
+			}
+
+			if((std::string)argv[4] == "ms"){
+				time_choice = 2;
+			}
+			if((std::string)argv[4] == "s"){
+				time_choice = 3;
+			}
+		}
+
+
+
+	}
+
+	else{
 		
 		std::cout<<"Wrong Usage!"<<std::endl;
 		print_usage();
 		return -1;	
+
+		if((std::string)argv[1] == "-I"){
+			input_path = argv[2];
+		}
+		if((std::string)argv[1] == "-T"){
+			std::cout<<"Not Implemented yet!"<<std::endl;
+			return -1;
+		}
+
 	}
 
   
@@ -518,9 +556,30 @@ int main(int argc, char *argv[]){
 	printGraph(adj,V,Vertices_Array);
 	
 	//Write Graphviz file
-	printGraphviz(adj,V,Vertices_Array);
-	
+	printGraphviz(adj,V,Vertices_Array);	
 	#endif
+	
 
-return 0;
+		
+
+	//End time
+	std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+	
+	//From command line argument	
+	if(show_time){	
+		if(time_choice == 0)		
+			std::cout << file_path << " = " << (float) std::chrono::duration_cast<std::chrono::nanoseconds> (end - begin).count() << " [ns]" << std::endl;
+
+		if(time_choice == 1)
+			std::cout << file_path <<" = " << (float) std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << " [µs]" << std::endl;
+
+		if(time_choice == 2)
+			std::cout << file_path << " = " << (float) std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count()/1000 << " [ms]" << std::endl;
+
+		if(time_choice == 3)
+			std::cout << file_path << " = " << (float) std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count()/1000000 << " [s]" << std::endl;
+
+	}
+
+	return 0;
 }
