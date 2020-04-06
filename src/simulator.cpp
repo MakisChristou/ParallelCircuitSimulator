@@ -16,11 +16,14 @@
 #include <chrono>
 
 //If you want verbose output uncomment the following line
-#define VERBOSE
+//#define VERBOSE
 
 
 //If you want G2 graph instead of G1 uncomment the following line
 #define G2
+
+//If you want Part B to be enabled uncomment the following line
+#define PARTB
 
 
 // Prints correct usage
@@ -279,82 +282,110 @@ int main(int argc, char *argv[]){
 
 	int time_choice = 2; //default is ms
 	bool show_time = false;
+	bool test_given = false;
+	
+	bool argument_flag = false;
 	
 	//Argument handling
 	if(argc == 1){
 		print_usage();
 		return -1;
-	}else if(argc == 2){
-		print_usage();
-		return -1;	
-
 	}
-	//One cli argument
-	else if(argc == 3){		
 
-		if((std::string)argv[1] == "-C"){
-			file_path = argv[2];
-		}
+	//If any argument is given
+	else{	
+		//Itterate through the arguments
+		for (int i = 1; i < argc; ++i){
+			
+			//Bench File path
+			if((std::string)argv[i] == "-C"){
+				argument_flag = true;
+				if(argc == 2){
+					std::cout << "Specify .bench path\n";
+					print_usage();
+					return -1;
+				}else{
+					if(argc > i+1)					
+						file_path = argv[i+1];
+					else{
+						std::cout << "Specify a .bench path\n";
+						print_usage();
+						return -1;
+					}
+				}
+			}
+
+			//Measure time
+			else if((std::string)argv[i] == "-T" && argument_flag == true){
+				show_time = true;
+				if(argc == 2){
+					std::cout << "Specify ns,us,ms,s\n";
+					print_usage();
+					return -1;
+				}else if((std::string)argv[i+1] != "ns" && (std::string)argv[i+1] != "us" && (std::string)argv[i+1] != "ms" && (std::string)argv[i+1] != "s"){
+
+					std::cout << "Specify ns,us,ms,s\n";
+					print_usage();
+					return -1;
+				}
+				else {
+					if((std::string)argv[i+1] == "ns"){
+						time_choice = 0;
+					}
+	
+					if((std::string)argv[i+1] == "us"){
+						time_choice = 1;
+					}
+
+					if((std::string)argv[i+1] == "ms"){
+						time_choice = 2;
+					}
+					if((std::string)argv[i+1] == "s"){
+						time_choice = 3;
+					}
+
+
+				}
+			}
+			
+	 		//Input File path
+			else if((std::string)argv[i] == "-I" && argument_flag == true){
+				test_given = true;
+				if(argc == 2){
+					std::cout << "Specify input file path\n";
+					print_usage();
+					return -1;
+				}else{
+					if(argc > i+1)					
+						input_path = argv[i+1];
+					else{
+						std::cout << "Specify an input path\n";
+						print_usage();
+							return -1;
+					}
+				}
+			}
 		
+		}
 	}
 	
-	//Two cli arguments
-	else if(argc == 5){
-
-		if((std::string)argv[1] == "-C"){
-			file_path = argv[2];
-		}
-
-		if((std::string)argv[3] == "-T"){
-			show_time = true;
-		
-			if((std::string)argv[4] == "ns"){
-				time_choice = 0;
-			}
-	
-			if((std::string)argv[4] == "us"){
-				time_choice = 1;
-			}
-
-			if((std::string)argv[4] == "ms"){
-				time_choice = 2;
-			}
-			if((std::string)argv[4] == "s"){
-				time_choice = 3;
-			}
-		}
-
-
-
-	}
-
-	else{
-		
-		std::cout<<"Wrong Usage!"<<std::endl;
+	//At leas specify an input file
+	if(argument_flag == false){
+		std::cout << "Please specify an input file\n";
 		print_usage();
-		return -1;	
-
-		if((std::string)argv[1] == "-I"){
-			input_path = argv[2];
-		}
-		if((std::string)argv[1] == "-T"){
-			std::cout<<"Not Implemented yet!"<<std::endl;
-			return -1;
-		}
+		return -1;
 	}
 
-  
-  //INPUT FILE
+  //BENCH FILE
   bench_file.open(file_path);
+		
+	//INPUT FILE
+  input_file.open(input_path);
+
 
   //Initialization
   std::stringstream stream; //for "prints"
 
-  //Declare file for algorithm1 output
-  //std::ofstream myfile1;
-
-	//Output file
-	//myfile1.open ("output");
 
 	std::string current_line;
 	
@@ -560,7 +591,6 @@ int main(int argc, char *argv[]){
 						
 						addEdge(adj,vertexx.component_id,vertex.component_id);
 
-
 					}
 				}	
 			}
@@ -598,6 +628,7 @@ int main(int argc, char *argv[]){
 	std::vector<std::pair < int, int > > saved_edges;
 
 	index = 0;
+
 	for(auto& vertex_neighbours : adj){
 		
 		if(vertex_neighbours.size() > 1){
@@ -666,7 +697,6 @@ int main(int argc, char *argv[]){
 		number++;
 		index++;
 	}
-
 	
 	#ifdef VERBOSE		
 	//Print Netlist
@@ -680,6 +710,42 @@ int main(int argc, char *argv[]){
 	#endif
 
 	#endif //G2
+		
+	
+	//Part B
+	#ifdef PARTB
+	
+	//Check if in input file is given
+	if(!test_given){
+		std::cout << "No test/input file given\n";
+		print_usage();
+		return -1;
+	}	
+	
+
+	std::vector<std::string> Tests;
+
+	//Parse input/test file
+  if (!input_file) {
+    std::cout << "Error Opening Vector File" << std::endl;
+		print_usage();
+    return -1;
+  }
+  else{
+    while(std::getline(input_file, current_line)){
+      Tests.push_back(current_line);
+//			std::cout << current_line << std::endl;
+    }
+  }
+
+	
+	
+
+	
+
+	#endif //PartB
+
+
 
 	//End time
 	std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
