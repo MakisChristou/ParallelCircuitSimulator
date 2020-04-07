@@ -14,16 +14,17 @@
 #include <list> 
 #include <stack> 
 #include <chrono>
+#include <queue>
 
 //If you want verbose output uncomment the following line
-//#define VERBOSE
+#define VERBOSE
 
 
 //If you want G2 graph instead of G1 uncomment the following line
 #define G2
 
 //If you want Part B to be enabled uncomment the following line
-#define PARTB
+//#define PARTB
 
 
 // Prints correct usage
@@ -51,7 +52,6 @@ int netlist_stats(int file_lines, int NAND, int AND, int OR,int NOR,int NOT,int 
 
 // Returns the edges when given a line
 std::vector<std::string> get_edge(std::string line){
-
 
 	int pos1 = line.find("(");
 	int pos2 = line.find(",");
@@ -266,6 +266,127 @@ void printGraphviz(std::vector<std::vector<int>>& adj, std::vector <struct Verte
 
 }
 
+//Prints a queue
+void print_queue(std::queue<int> q){
+  while (!q.empty())
+  {
+    std::cout << q.front() << " ";
+    q.pop();
+  }
+  std::cout << std::endl;
+}
+
+//Returns a node's indegree
+int getIndegree(std::vector<std::vector<int>>& adj,int node){
+
+	int counter = 0;
+	for(auto& vertex : adj){
+		for(auto& neighbour : vertex){
+
+			if(neighbour == node){
+				counter++;
+			}
+		}
+	}
+	
+	#ifdef VERBOSE
+//		std::cout << "Node " << node << " has indegree " << counter <<std::endl;
+	#endif
+
+	return counter;
+} 
+
+//Print adj
+void printGraph1(std::vector<std::vector<int>>& adj){
+
+	int vertex_num = 0;
+	for(auto& vertex : adj){
+
+		std::cout << vertex_num;
+
+		for(auto& neighbour : vertex){
+			std::cout <<" -> "<<neighbour<<" ";
+
+		}
+		std::cout << std::endl;
+		vertex_num++;
+	}
+
+}
+
+//Topological sort function
+std::vector<int> topologicalSort(std::vector<std::vector<int>>& adj, std::vector <struct VertexData> Vertices_Vector){ 
+		
+	#ifdef VERBOSE
+	std::cout << "---- Topological Sort ----" << std::endl;
+	#endif
+	
+	std::vector<int> Sorted;	
+	std::queue<int> waiting;	
+
+	//Declare and initialize visited vector
+	std::vector<int> visited(Vertices_Vector.size());
+
+	for(auto& vertex : visited){
+		vertex = 0;
+	}
+	
+	//Add inputs (i.e. indegree = 0 in queue)
+	for(auto& vertex : Vertices_Vector){
+		if(vertex.component_name == "INPUT"){
+			waiting.push(vertex.component_id);
+			visited[vertex.component_id] = 1;
+		}
+	}
+
+	//Actually start topological sort
+	while (!waiting.empty())
+  {
+   		int p = waiting.front(); 
+     	waiting.pop();
+			
+//			std::cout << "===========================================\n";
+//			print_queue(waiting);
+//			std::cout << "===========================================\n";
+
+	
+//	
+			std::vector<int> neighbours = adj[p];
+//			std::cout << "Node " << p << " with unvisited neighbours: ";
+
+			//Remove all edges that start from  p
+			adj[p].clear();
+
+
+			for(auto& neighbour : neighbours){
+
+				if((visited[neighbour] == 0) && getIndegree(adj,neighbour) == 0){	
+					visited[neighbour] = 1;
+//					std::cout <<" " <<neighbour <<" "; 
+					waiting.push(neighbour);
+				}
+			}
+
+//			std::cout<<std::endl;
+			//Process p
+			Sorted.push_back(p);	
+			#ifdef VERBOSE
+			std::cout << "(Visiting " << p <<")"<< std::endl;
+			#endif
+//			std::cout << "------------------------------------------\n";
+//			printGraph1(adj);
+//			std::cout << "------------------------------------------\n";
+
+  }
+
+	#ifdef VERBOSE
+	std::cout << "--------------------------" << std::endl;
+	#endif
+	return Sorted;
+}
+
+
+
 //Main Function
 int main(int argc, char *argv[]){
 	
@@ -375,6 +496,14 @@ int main(int argc, char *argv[]){
 		print_usage();
 		return -1;
 	}
+			
+	//Check if input input is a bench file
+	if(file_path.substr(file_path.length() - 6) != ".bench"){
+		std::cout << "Wrong file type!" << std::endl;
+		print_usage();
+		return -1;
+	}
+	
 
   //BENCH FILE
   bench_file.open(file_path);
@@ -738,14 +867,80 @@ int main(int argc, char *argv[]){
     }
   }
 
-	
+	// Four types of input file
+	// .txt .vec .comp.10 .benchtest.in
+		
+	int file_type = -1; // 0 = .txt 1 = .vec 2 = .comp.10 3 = .benchtest.in
+		
+	//Check if input file is one of the 4 types		
+	if(input_path.substr(input_path.length() - 4) == ".txt" ){
+		
+		file_type = 0;	
+
+	}	
+	else if(input_path.substr(input_path.length() - 4) == ".vec"){
+
+		file_type = 1;	
+
+	}	
+	else if(input_path.substr(input_path.length() - 8) == ".comp.10"){
+
+		file_type = 2;	
+
+	}	
+	else if(input_path.substr(input_path.length() - 13) == ".benchtest.in"){
+
+		file_type = 3;	
+
+	}
+
+	//Not a valid filetype
+	if(file_type == -1){
+		std::cout << "Wrong file type!" << std::endl;
+		print_usage();
+		return -1;
+	}
 	
 
-	
+	//File Parsing	
+	//.txt
+	if(file_type == 0){
 
+
+
+	}
+	//.vec
+	else if(file_type == 1){
+
+
+
+	}
+	//.comp.10
+	else if(file_type == 2){
+
+
+
+	}
+	///benchtest.in
+	else if(file_type == 3){
+
+
+	}
+
+
+	
 	#endif //PartB
 
 
+		for(int i = 0; i < Vertices_Vector.size(); i++){
+
+			getIndegree(adj,i);
+		
+		}
+		
+	printGraph1(adj);
+	
+	topologicalSort(adj,Vertices_Vector);
 
 	//End time
 	std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
