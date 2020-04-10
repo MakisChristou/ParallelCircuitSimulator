@@ -17,7 +17,7 @@
 #include <queue>
 
 //If you want verbose output uncomment the following line
-#define VERBOSE
+//#define VERBOSE
 
 
 //If you want the progress percentage uncomment the following line
@@ -36,7 +36,7 @@
 
 // Prints correct usage
 int print_usage(){
-	std::cout<<"Usage: simulator [-C <bench_path>] [-I <input_path>] [-T <time>]\n";
+	std::cout<<"Usage: simulator [-C <bench_path>] [-I <input_path>] [-T <time>] [-S ]\n";
 	return 0;
 }
 
@@ -471,6 +471,17 @@ std::cout << "-------------------------------\n";
 
 }
 
+//Returns the size in bytes of the entire graph
+int getGraphSize(std::vector<std::vector<int>>& adj, std::vector <struct VertexData> Vertices_Vector){ 
+	
+				int counter = 0;
+				for(auto& vertex : adj){
+					counter = counter + vertex.size();
+				}
+
+			return ((sizeof(int) * counter) + (sizeof(struct VertexData) * Vertices_Vector.size())); 	
+}
+
 //Main Function
 int main(int argc, char *argv[]){
 	
@@ -488,7 +499,7 @@ int main(int argc, char *argv[]){
 	int time_choice = 2; //default is ms
 	bool show_time = false;
 	bool test_given = false;
-	
+	bool print_stats = false;	
 	bool argument_flag = false;
 	
 	//Argument handling
@@ -570,7 +581,11 @@ int main(int argc, char *argv[]){
 					}
 				}
 			}
-		
+	
+			//Circuit Statistics
+		else if((std::string)argv[i] == "-S" && argument_flag == true){
+			print_stats = true;
+		}		
 		}
 	}
 	
@@ -1069,7 +1084,7 @@ int main(int argc, char *argv[]){
 	
 	
 	//printGraph1(adj);
-	std::vector<int> Sorted = topologicalSort(adj,Vertices_Vector);
+//	std::vector<int> Sorted = topologicalSort(adj,Vertices_Vector);
 
 
 	#ifdef VERBOSE
@@ -1085,29 +1100,44 @@ int main(int argc, char *argv[]){
 
 
 	//Print Sucessors
-	printSucessors(adj,Vertices_Vector);
+//	printSucessors(adj,Vertices_Vector);
 
 	//Print Predecessors
-	printPredecessors(adj,Vertices_Vector);
+//	printPredecessors(adj,Vertices_Vector);
 
 	
 	//End time
 	std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 	
+	std::string time_unit = "";
+	std::string stats = "";
+
+	if(print_stats){
+
+		//Calculate Graph Size 
+		int bytes = getGraphSize(adj,Vertices_Vector);
+
+
+					stats = " LINES:"+std::to_string(index)+" NAND:"+std::to_string(NAND)+" AND:"+std::to_string(AND)+" OR:"+std::to_string(OR)+" NOR:"+std::to_string(NOR)+" NOT:"+std::to_string(NOT)+" BUFF:"+std::to_string(BUFF)+" INPUT:"+std::to_string(INPUT)+" OUTPUT:"+std::to_string(OUTPUT)+" KB:"+std::to_string(bytes/1024);
+	}
+
+
 	//From command line argument	
 	if(show_time){	
 		if(time_choice == 0)		
-			std::cout << file_path << " = " << (float) std::chrono::duration_cast<std::chrono::nanoseconds> (end - begin).count() << " [ns]" << std::endl;
+			std::cout << file_path << " = " << (float) std::chrono::duration_cast<std::chrono::nanoseconds> (end - begin).count() << " [ns]" << stats <<std::endl;
 
 		if(time_choice == 1)
-			std::cout << file_path <<" = " << (float) std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << " [µs]" << std::endl;
+			std::cout << file_path <<" = " << (float) std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << " [µs]" << stats <<std::endl;
 
 		if(time_choice == 2)
-			std::cout << file_path << " = " << (float) std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count()/1000 << " [ms]" << std::endl;
+			std::cout << file_path << " = " << (float) std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count()/1000 << " [ms]" << stats <<std::endl;
 
 		if(time_choice == 3)
-			std::cout << file_path << " = " << (float) std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count()/1000000 << " [s]" << std::endl;
+			std::cout << file_path << " = " << (float) std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count()/1000000 << " [s]" << stats <<std::endl;
 
+	}else if(print_stats){
+		std::cout << stats << std::endl;	
 	}
 
 	return 0;
