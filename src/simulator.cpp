@@ -36,7 +36,7 @@
 
 // Prints correct usage
 int print_usage(){
-	std::cout<<"Usage: simulator [-C <bench_path>] [-I <input_path>] [-T <time>] [-S ]\n";
+	std::cout<<"Usage: simulator [-C <bench_path>] [-I <input_path>] [-T <time>] [-S ] [-G ]\n";
 	return 0;
 }
 
@@ -501,6 +501,7 @@ int main(int argc, char *argv[]){
 	bool test_given = false;
 	bool print_stats = false;	
 	bool argument_flag = false;
+	bool print_graphviz = false;
 	
 	//Argument handling
 	if(argc == 1){
@@ -583,9 +584,13 @@ int main(int argc, char *argv[]){
 			}
 	
 			//Circuit Statistics
-		else if((std::string)argv[i] == "-S" && argument_flag == true){
-			print_stats = true;
-		}		
+			else if((std::string)argv[i] == "-S" && argument_flag == true){
+				print_stats = true;
+			}		
+			//Graphviz
+			else if((std::string)argv[i] == "-G" && argument_flag == true){
+				print_graphviz = true;
+			}
 		}
 	}
 	
@@ -852,11 +857,8 @@ int main(int argc, char *argv[]){
 	#ifdef VERBOSE		
 	//Print Netlist
 	printGraph(adj,Vertices_Vector);
-	
-	//Write Graphviz file
-	printGraphviz(adj,Vertices_Vector);	
 	#endif
-	
+
 	#ifdef PROGRESS
 		std::cout << std::endl;
 	#endif
@@ -974,10 +976,7 @@ int main(int argc, char *argv[]){
 	#ifdef VERBOSE		
 	//Print Netlist
 	printGraph(adj,Vertices_Vector);
-	
-	//Write Graphviz file
-	printGraphviz(adj,Vertices_Vector);	
-
+		
 	//Print Vertices in stdout (std::vector)	
 	printVertexVector(Vertices_Vector);
 	#endif
@@ -1119,6 +1118,15 @@ int main(int argc, char *argv[]){
 
 
 					stats = " LINES:"+std::to_string(index)+" NAND:"+std::to_string(NAND)+" AND:"+std::to_string(AND)+" OR:"+std::to_string(OR)+" NOR:"+std::to_string(NOR)+" NOT:"+std::to_string(NOT)+" BUFF:"+std::to_string(BUFF)+" INPUT:"+std::to_string(INPUT)+" OUTPUT:"+std::to_string(OUTPUT)+" KB:"+std::to_string(bytes/1024);
+	}
+	
+
+	if(print_graphviz){
+		//Write Graphviz file
+		if(adj.size() > 100){
+			std::cout << "No graphviz for large graphs\n";
+		}else
+			printGraphviz(adj,Vertices_Vector);	
 	}
 
 
