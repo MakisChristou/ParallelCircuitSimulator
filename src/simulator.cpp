@@ -17,11 +17,15 @@
 #include <queue>
 
 //If you want verbose output uncomment the following line
-//#define VERBOSE
+#define VERBOSE
 
 
-//If you want the progress bar uncomment the following line
-#define PROGRESS
+//If you want the progress percentage uncomment the following line
+//#define PROGRESS
+
+//If you want the progress bar on top of the percentage uncomment the following lineowing line
+//#define BAR
+
 
 //If you want G2 graph instead of G1 uncomment the following line
 #define G2
@@ -121,8 +125,10 @@ std::vector<std::string> get_edge(std::string line){
 struct VertexData{
 	int component_id;
 	std::string component_name;
-	std::vector<int> inputs; //multiple inputs
-	int output; //one output
+	std::vector<int> inputs; //Edges that are the inputs of said component
+	int output; //Edge that is the output of said component
+	std::vector<int> predecessors; //The ids of the components that are said gate's immediate pred.
+	std::vector<int> successors; //The ids of the components that are said gate's immediate succ.
 };
 
 // A utility function to add an edge in a directed graph. 
@@ -321,32 +327,39 @@ void printGraph1(std::vector<std::vector<int>>& adj){
 void progressBar(std::string message, int x, int y){
 	
 	int percentage = (int)((x+1)*100.0/y);
-	std::string bar = " [..................................................]";
-
-	bar = " [";
-		
 	std::string progress = message + " :[";
 
+	#ifdef BAR
+	std::string bar = " [..........]";
+	bar = " [";
+	
 	if(percentage < 10)
 		progress = message + " :[  ";
 
 	if(percentage >= 10 && percentage < 100)
 		progress = message + " :[ ";
 
-
-	for(int i = 0; i < percentage/2; i++){		
+	for(int i = 0; i < percentage/10; i++){		
 		bar = bar + "#";	
 	}
 
-	int left = 50-percentage/2;
+	int left = 10-percentage/10;
 
 	for(int i = 0; i < left; i++){
 		bar = bar + ".";	
 	}
 	
 	bar = bar + "]";	
+	
+	#endif
 
+	#ifdef BAR
 	std::cout << "\r"<<progress<<percentage<<"%]"<<bar<<std::flush;
+	#endif
+	
+	#ifndef BAR
+	std::cout << "\r"<<progress<<percentage<<"%]"<<std::flush;
+	#endif
 
 }
 
@@ -385,7 +398,7 @@ std::vector<int> topologicalSort(std::vector<std::vector<int>>& adj, std::vector
      	waiting.pop();
 			
 			#ifdef PROGRESS
-				if(progress % 10000)
+				if(progress % 1000000)
 					progressBar("Topological Sort",progress,Vertices_Vector.size());
 			#endif			
 
@@ -394,7 +407,6 @@ std::vector<int> topologicalSort(std::vector<std::vector<int>>& adj, std::vector
 
 			//Remove all edges that start from  p
 			adj[p].clear();
-
 
 			for(auto& neighbour : neighbours){
 
@@ -417,6 +429,46 @@ std::vector<int> topologicalSort(std::vector<std::vector<int>>& adj, std::vector
 	#endif
 
 	return Sorted;
+}
+
+//Print graph's successors
+void printSucessors(std::vector<std::vector<int>>& adj, std::vector <struct VertexData> Vertices_Vector){ 
+
+	std::cout << "---- Printing Sucessors ----\n";
+
+	for(auto& vertex : Vertices_Vector){
+
+					std::cout << "Node " << vertex.component_name << "(" << vertex.component_id << ") has the following successors : ";
+
+					for(auto& succ : vertex.successors){
+						std::cout << succ << " ";
+					}
+
+					std::cout << std::endl;
+
+	}
+	std::cout << "----------------------------\n";
+}
+
+//Print graph's predecessors
+void printPredecessors(std::vector<std::vector<int>>& adj, std::vector <struct VertexData> Vertices_Vector){ 
+	
+	std::cout << "---- Printing Predecessors ----\n";
+
+	for(auto& vertex : Vertices_Vector){
+
+					std::cout << "Node " << vertex.component_name << "(" << vertex.component_id << ") has the following predecessors : ";
+
+					for(auto& pred : vertex.predecessors){
+						std::cout << pred << " ";
+					}
+
+					std::cout << std::endl;
+
+	}
+std::cout << "-------------------------------\n";
+
+
 }
 
 //Main Function
@@ -645,8 +697,6 @@ int main(int argc, char *argv[]){
 
 				//std::cout<<line.substr(0,5)<<std::endl;
 				INPUT++;
-				
-
 				Vertices_Vector.push_back(AddToGraph(line,index,adj,line.substr(0,5)));	
 
 			}
@@ -760,10 +810,8 @@ int main(int argc, char *argv[]){
 
 		#ifdef PROGRESS
 			if(index % 10000)
-				progressBar("Constr. G1 Graph",index,Vertices_Vector.size());			
+				progressBar("Constructing G1 Graph",index,Vertices_Vector.size());			
 		#endif
-
-
 	
 		//std::cout <<vertex.component_name << std::endl;	
 
@@ -778,7 +826,7 @@ int main(int argc, char *argv[]){
 					if(vertexx.output == input){
 						
 						addEdge(adj,vertexx.component_id,vertex.component_id);
-
+						
 					}
 				}	
 			}
@@ -794,6 +842,10 @@ int main(int argc, char *argv[]){
 	printGraphviz(adj,Vertices_Vector);	
 	#endif
 	
+	#ifdef PROGRESS
+		std::cout << std::endl;
+	#endif
+
 
 	//Graph is now G1
 
@@ -820,9 +872,14 @@ int main(int argc, char *argv[]){
 	
 	//Saving Edges with stems
 	for(auto& vertex_neighbours : adj){
-		
-		if(vertex_neighbours.size() > 1){
 
+
+		#ifdef PROGRESS
+				progressBar("Collecting Stems",index,adj.size());
+			#endif
+
+		if(vertex_neighbours.size() > 1){
+		
 			#ifdef VERBOSE
 			std::cout<<"\n Vertex "<< Vertices_Vector[index].component_id << " has "<<vertex_neighbours.size()<<" outputs" <<std::endl;
 			#endif
@@ -863,9 +920,7 @@ int main(int argc, char *argv[]){
 			if(index % 10000)
 				progressBar("Converting G1 to G2",number,saved_edges.size());
 		#endif
-	
-
-	
+		
 		#ifdef VERBOSE	
 		std::cout << "\n" << saved_pair.first << " -> " << saved_pair.second << std::endl;
 		#endif
@@ -895,7 +950,7 @@ int main(int argc, char *argv[]){
 		//Add 2 edges
 		addEdge(adj,saved_pair.first,index);
 		addEdge(adj,index,saved_pair.second);
-
+			
 			
 		number++;
 		index++;
@@ -913,7 +968,18 @@ int main(int argc, char *argv[]){
 	#endif
 
 	#endif //G2
-		
+
+
+	//Calculate Sucessors and Predecessors
+	int x = 0;
+	for(auto& node : adj){
+		for(auto& y : node){
+			Vertices_Vector[x].successors.push_back(y);
+			Vertices_Vector[y].predecessors.push_back(x);	
+		}
+		x++;
+	}
+	
 	
 	//Part B
 	#ifdef PARTB
@@ -1004,7 +1070,8 @@ int main(int argc, char *argv[]){
 	
 	//printGraph1(adj);
 	std::vector<int> Sorted = topologicalSort(adj,Vertices_Vector);
-	
+
+
 	#ifdef VERBOSE
 	std::cout << "---- Topological Order ----\n";
 	for(auto& node : Sorted){
@@ -1015,6 +1082,15 @@ int main(int argc, char *argv[]){
 	#endif
 
 
+
+
+	//Print Sucessors
+	printSucessors(adj,Vertices_Vector);
+
+	//Print Predecessors
+	printPredecessors(adj,Vertices_Vector);
+
+	
 	//End time
 	std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 	
