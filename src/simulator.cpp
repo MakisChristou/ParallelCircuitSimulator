@@ -28,7 +28,7 @@
 
 
 //If you want G2 graph instead of G1 uncomment the following line
-#define G2
+//#define G2
 
 //If you want Part B to be enabled uncomment the following line
 //#define PARTB
@@ -129,6 +129,7 @@ struct VertexData{
 	int output; //Edge that is the output of said component
 	std::vector<int> predecessors; //The ids of the components that are said gate's immediate pred.
 	std::vector<int> successors; //The ids of the components that are said gate's immediate succ.
+	int paths;
 };
 
 // A utility function to add an edge in a directed graph. 
@@ -201,7 +202,8 @@ struct VertexData AddToGraph(std::string line, int index, std::vector<std::vecto
 	
 	temp_vertex.component_id = index;
 	temp_vertex.component_name = component;
-	
+	temp_vertex.paths = 0;	
+
 	std::vector<int> inputs_vector;
 
 	
@@ -210,6 +212,7 @@ struct VertexData AddToGraph(std::string line, int index, std::vector<std::vecto
 		inputs_vector.push_back(-1);
 		temp_vertex.inputs = inputs_vector;
 		temp_vertex.output = std::stoi(IO[0]);
+		temp_vertex.paths = 1;	
 	}
 
 	else if(component != "OUTPUT"){
@@ -364,7 +367,7 @@ void progressBar(std::string message, int x, int y){
 }
 
 //Topological sort function
-std::vector<int> topologicalSort(std::vector<std::vector<int>>& adj, std::vector <struct VertexData> Vertices_Vector){ 
+std::vector<int> topologicalSort(std::vector<std::vector<int>> adj, std::vector <struct VertexData>& Vertices_Vector){ 
 		
 	std::vector<int> Sorted;	
 	std::queue<int> waiting;	
@@ -418,6 +421,21 @@ std::vector<int> topologicalSort(std::vector<std::vector<int>>& adj, std::vector
 
 			//Process p
 			Sorted.push_back(p);	
+
+			int node_paths = Vertices_Vector[p].paths;
+
+//			std::cout << "Working on node "<<p <<std::endl;
+			for(auto& predecessor : Vertices_Vector[p].predecessors){	
+
+//				std::cout << predecessor << std::endl;
+//				std::cout << node_paths<< " += " << 	Vertices_Vector[predecessor].paths << std::endl;
+				node_paths = node_paths + Vertices_Vector[predecessor].paths;			
+			}
+			
+			Vertices_Vector[p].paths = node_paths;
+			//std::cout << "Node " <<p <<" has " << node_paths <<std::endl; 
+			//std::cout << Vertices_Vector[p].paths << std::endl;
+
 
 			//Update progress counter
 			progress++;
@@ -1083,7 +1101,7 @@ int main(int argc, char *argv[]){
 	
 	
 	//printGraph1(adj);
-//	std::vector<int> Sorted = topologicalSort(adj,Vertices_Vector);
+	std::vector<int> Sorted = topologicalSort(adj,Vertices_Vector);
 
 
 	#ifdef VERBOSE
@@ -1097,13 +1115,27 @@ int main(int argc, char *argv[]){
 
 
 
-
+	#ifdef VERBOSE
 	//Print Sucessors
-//	printSucessors(adj,Vertices_Vector);
+	printSucessors(adj,Vertices_Vector);
 
 	//Print Predecessors
-//	printPredecessors(adj,Vertices_Vector);
+	printPredecessors(adj,Vertices_Vector);
 
+	#endif
+
+
+	int circuit_paths = 0;
+
+	for(auto& vertex : Vertices_Vector){
+//		std::cout << "Node "<<vertex.component_id << " has "<<vertex.paths << std::endl; 		
+
+		if(vertex.component_name == "OUTPUT"){
+			circuit_paths = circuit_paths + vertex.paths;
+		}
+	}
+
+	std::cout << circuit_paths <<std::endl;
 	
 	//End time
 	std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
@@ -1111,6 +1143,7 @@ int main(int argc, char *argv[]){
 	std::string time_unit = "";
 	std::string stats = "";
 
+	//Returns Netlist stats in std out
 	if(print_stats){
 
 		//Calculate Graph Size 
@@ -1120,7 +1153,7 @@ int main(int argc, char *argv[]){
 					stats = " LINES:"+std::to_string(index)+" NAND:"+std::to_string(NAND)+" AND:"+std::to_string(AND)+" OR:"+std::to_string(OR)+" NOR:"+std::to_string(NOR)+" NOT:"+std::to_string(NOT)+" BUFF:"+std::to_string(BUFF)+" INPUT:"+std::to_string(INPUT)+" OUTPUT:"+std::to_string(OUTPUT)+" KB:"+std::to_string(bytes/1024);
 	}
 	
-
+	//Print to Graphviz file
 	if(print_graphviz){
 		//Write Graphviz file
 		if(adj.size() > 100){
