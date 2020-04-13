@@ -19,24 +19,24 @@
 //If you want verbose output uncomment the following line
 //#define VERBOSE
 
-
-//If you want the progress percentage uncomment the following line
-//#define PROGRESS
-
-//If you want the progress bar on top of the percentage uncomment the following lineowing line
-//#define BAR
-
-
 //If you want G2 graph instead of G1 uncomment the following line
-//#define G2
+#define G2
 
 //If you want Part B to be enabled uncomment the following line
 //#define PARTB
 
+//Global Initializations
+int time_choice = 2; //default is ms
+bool show_time = false;
+bool test_given = false;
+bool print_stats = false;	
+bool argument_flag = false;
+bool print_graphviz = false;
+bool percentage_bar = false;
 
 // Prints correct usage
 int print_usage(){
-	std::cout<<"Usage: simulator [-C <bench_path>] [-I <input_path>] [-T <time>] [-S ] [-G ]\n";
+	std::cout<<"Usage: simulator [-C <bench_path>] [-I <input_path>] [-T <time>] [-S ] [-G ] [-B ]\n";
 	return 0;
 }
 
@@ -130,6 +130,8 @@ struct VertexData{
 	std::vector<int> predecessors; //The ids of the components that are said gate's immediate pred.
 	std::vector<int> successors; //The ids of the components that are said gate's immediate succ.
 	int paths;
+	std::vector<int> input_values;
+	int output_value;
 };
 
 // A utility function to add an edge in a directed graph. 
@@ -203,6 +205,7 @@ struct VertexData AddToGraph(std::string line, int index, std::vector<std::vecto
 	temp_vertex.component_id = index;
 	temp_vertex.component_name = component;
 	temp_vertex.paths = 0;	
+	temp_vertex.output_value = 0;
 
 	std::vector<int> inputs_vector;
 
@@ -327,12 +330,12 @@ void printGraph1(std::vector<std::vector<int>>& adj){
 }
 
 //Progress Bar function
-void progressBar(std::string message, int x, int y){
+void progressBar(std::string message, unsigned long x, unsigned long y){
 	
 	int percentage = (int)((x+1)*100.0/y);
 	std::string progress = message + " :[";
 
-	#ifdef BAR
+	
 	std::string bar = " [..........]";
 	bar = " [";
 	
@@ -354,15 +357,8 @@ void progressBar(std::string message, int x, int y){
 	
 	bar = bar + "]";	
 	
-	#endif
-
-	#ifdef BAR
-	std::cout << "\r"<<progress<<percentage<<"%]"<<bar<<std::flush;
-	#endif
 	
-	#ifndef BAR
-	std::cout << "\r"<<progress<<percentage<<"%]"<<std::flush;
-	#endif
+	std::cout << "\r"<<progress<<percentage<<"%]"<<bar<<std::flush;
 
 }
 
@@ -387,9 +383,6 @@ std::vector<int> topologicalSort(std::vector<std::vector<int>> adj, std::vector 
 		}
 	}
 	
-	#ifdef PROGRESS
-		std::cout << std::endl;
-	#endif
 	
 	//Initialize progress counter	
 	int progress = 0;
@@ -400,10 +393,10 @@ std::vector<int> topologicalSort(std::vector<std::vector<int>> adj, std::vector 
    		int p = waiting.front(); 
      	waiting.pop();
 			
-			#ifdef PROGRESS
+			if(percentage_bar){
 				if(progress % 1000000)
 					progressBar("Topological Sort",progress,Vertices_Vector.size());
-			#endif			
+			}
 
 	
 			std::vector<int> neighbours = adj[p];
@@ -442,9 +435,9 @@ std::vector<int> topologicalSort(std::vector<std::vector<int>> adj, std::vector 
   }
 	
 	
-	#ifdef PROGRESS
+	if(percentage_bar)
 		std::cout << std::endl;
-	#endif
+	
 
 	return Sorted;
 }
@@ -500,6 +493,208 @@ int getGraphSize(std::vector<std::vector<int>>& adj, std::vector <struct VertexD
 			return ((sizeof(int) * counter) + (sizeof(struct VertexData) * Vertices_Vector.size())); 	
 }
 
+//Returns the netlist's paths
+int countPaths(std::vector <struct VertexData> Vertices_Vector){ 
+
+	int circuit_paths = 0;
+
+	for(auto& vertex : Vertices_Vector){
+		if(vertex.component_name == "OUTPUT"){
+			circuit_paths = circuit_paths + vertex.paths;
+		}
+	}
+
+
+
+	#ifdef VERBOSE
+	std::cout << circuit_paths <<std::endl;
+	#endif	
+
+	return circuit_paths;
+
+
+}
+
+//Prints the Topological Order of the netlist
+void printTopological(std::vector<int> Sorted, std::vector <struct VertexData> Vertices_Vector){ 
+
+	std::cout << "---- Topological Order ----\n";
+
+	for(auto& node : Sorted){
+		std::cout << Vertices_Vector[node].component_id << " - " << Vertices_Vector[node].component_name << "\n";
+	}	
+	std::cout << "---------------------------\n";
+
+
+}
+
+//Evaluates a single gate
+int evaluateGate(std::vector<int> input_vector,std::string component_name){
+
+	int output = -1;
+	
+	//Check if input vector is empty
+	if(input_vector.empty()){
+		return -1;
+	}
+
+	//Check if gates have > 2 inputs
+	if(input_vector.size() == 1){
+		if(component_name == "NAND" || component_name == "AND" || component_name == "OR" || component_name == "NOR"){
+			std::cout << "Gate with only 1 input\n";
+			return -1;
+		}
+	}
+
+
+	if(component_name == "NAND"){
+				output = 0;	
+				for(auto& in : input_vector){
+					if(in == 0){
+						output = 1;	
+						break;
+					}
+				}
+
+	}
+
+	else if(component_name == "AND"){
+				
+				output = 1;	
+				for(auto& in : input_vector){
+					if(in == 0){
+						output = 0;	
+						break;
+					}
+				}	
+
+	}
+
+	else if(component_name == "OR"){
+				output = 0;	
+				for(auto& in : input_vector){
+					if(in == 1){
+						output = 1;	
+						break;
+					}
+				}	
+	}
+
+	else if(component_name == "NOR"){
+				output = 1;	
+				for(auto& in : input_vector){
+					if(in == 1){
+						output = 0;	
+						break;
+					}
+				}	
+	}
+
+	else if(component_name == "NOT"){
+		
+		if(input_vector.size() != 1){
+			std::cout << " NOT GATE WITH MULTIPLE INPUTS !!!" << std::endl;
+			return -1;
+		}
+
+
+		if(input_vector[0] == 0)
+			output = 1;
+		if(input_vector[0] == 1)
+			output = 0;
+
+	}
+
+	else if(component_name == "BUFF" || component_name == "BUFFs"){
+		if(input_vector.size() != 1){
+			std::cout << " BUFF GATE WITH MULTIPLE INPUTS !!!" << std::endl;
+			return -1;
+		}
+		output = input_vector[0];
+	}
+
+	else if(component_name == "INPUT" || component_name == "INPUTs"){
+		if(input_vector.size() != 1){
+			std::cout << " INPUT GATE WITH MULTIPLE INPUTS !!!" << std::endl;
+			return -1;
+		}
+		output = input_vector[0];	
+	}
+
+	else if(component_name == "OUTPUT" || component_name == "OUTPUTs"){
+		if(input_vector.size() != 1){
+			std::cout << " OUTPUT GATE WITH MULTIPLE INPUTS !!!" << std::endl;
+			return -1;
+		}
+		output = input_vector[0];
+	}
+
+	else if(component_name == "NANDs" || component_name == "ANDs" || component_name == "ORs" || component_name == "NORs" || component_name == "NOTs"){
+		if(input_vector.size() != 1){
+			std::cout << " STEM GATE WITH MULTIPLE INPUTS !!!" << std::endl;
+			return -1;
+		}
+		output = input_vector[0];
+	}
+
+ return output;
+}			
+
+//Evaluate Netlist for a given Input Pattern
+std::vector<int> evaluate(std::vector<std::vector<int>> adj, std::vector <struct VertexData> Vertices_Vector, std::vector<int> Sorted, std::vector<int> input){ 
+
+	std::vector<int> output;
+	int i = 0;
+	
+	
+	for(auto& component : Sorted){
+		if(Vertices_Vector[component].component_name == "INPUT"){
+			Vertices_Vector[component].input_values.push_back(input[i]);
+		}
+		i++;
+	}
+
+
+	/*
+	for(auto& gate : Vertices_Vector){
+
+		std::cout << gate.component_name << " - " << gate.component_id << " - output: " << gate.output_value << " - inputs: ";
+		for(auto& in_val : gate.input_values){
+			std::cout << in_val << " ";
+		}
+		std::cout << std::endl;
+	}
+*/
+	
+	//Propagate results
+	for(auto gate : Sorted){
+		
+		int gate_output = -1;
+	
+		std::vector<int> input_vector =  Vertices_Vector[gate].input_values;
+
+		std::string gate_type = Vertices_Vector[gate].component_name;
+
+		gate_output = evaluateGate(input_vector,gate_type);
+
+		Vertices_Vector[gate].output_value = gate_output;
+
+		//For each successor add the output value to it's input values	
+		
+		for(auto succ: Vertices_Vector[gate].successors){
+
+			Vertices_Vector[succ].input_values.push_back(gate_output);	
+		}
+
+		
+		if(Vertices_Vector[gate].component_name == "OUTPUT"){
+			output.push_back(gate_output);
+		}	
+	}
+	return output;
+}
+
+
 //Main Function
 int main(int argc, char *argv[]){
 	
@@ -514,13 +709,6 @@ int main(int argc, char *argv[]){
 	std::string file_path;
 	std::string input_path;
 
-	int time_choice = 2; //default is ms
-	bool show_time = false;
-	bool test_given = false;
-	bool print_stats = false;	
-	bool argument_flag = false;
-	bool print_graphviz = false;
-	
 	//Argument handling
 	if(argc == 1){
 		print_usage();
@@ -605,10 +793,17 @@ int main(int argc, char *argv[]){
 			else if((std::string)argv[i] == "-S" && argument_flag == true){
 				print_stats = true;
 			}		
+
 			//Graphviz
 			else if((std::string)argv[i] == "-G" && argument_flag == true){
 				print_graphviz = true;
 			}
+
+			//Percentage Bar
+			else if((std::string)argv[i] == "-B" && argument_flag == true){
+				percentage_bar = true;
+			}
+
 		}
 	}
 	
@@ -625,6 +820,7 @@ int main(int argc, char *argv[]){
 		print_usage();
 		return -1;
 	}
+
 	
 
   //BENCH FILE
@@ -657,7 +853,8 @@ int main(int argc, char *argv[]){
     }
   }
 	
-
+	
+	//Netlist Statistics Counters
 	int index = 0;
 	int INPUT=0;
 	int OUTPUT=0;
@@ -673,10 +870,10 @@ int main(int argc, char *argv[]){
 	//File preprocessing
 	for(auto& line : Lines){
 		
-		#ifdef PROGRESS
+		if(percentage_bar){
 			if(index % 10000)
 				progressBar("Preprocessing File",index,Lines.size());			
-		#endif
+		}	
 	
 		//Remove whitespace
 		line.erase(remove(line.begin(),line.end(),' '),line.end());
@@ -711,9 +908,9 @@ int main(int argc, char *argv[]){
 
 	std::vector<std::vector<int>> adj(V);
 	
-	#ifdef PROGRESS
+	if(percentage_bar)
 		std::cout << std::endl;
-	#endif
+	
 		
 	//Reinit index		
 	index = 0;
@@ -721,10 +918,10 @@ int main(int argc, char *argv[]){
  	//Parse clean file
 	for(auto& line : Lines){
 			
-		#ifdef PROGRESS
+		if(percentage_bar){
 			if(index % 10000)
 				progressBar("Identifying Gates",index,Lines.size());			
-		#endif
+		}
 		
 			//Print Line for debugging									
 			#ifdef VERBOSE
@@ -838,18 +1035,18 @@ int main(int argc, char *argv[]){
 
 	index = 0;	
 
-	#ifdef PROGRESS
+	if(percentage_bar)
 		std::cout << std::endl;
-	#endif
+	
 
 	//Construct Actual Graph (G1)
 	//For each component
 	for(auto& vertex : Vertices_Vector){
 
-		#ifdef PROGRESS
+		if(percentage_bar){
 			if(index % 10000)
 				progressBar("Constructing G1 Graph",index,Vertices_Vector.size());			
-		#endif
+		}
 	
 		//std::cout <<vertex.component_name << std::endl;	
 
@@ -877,11 +1074,9 @@ int main(int argc, char *argv[]){
 	printGraph(adj,Vertices_Vector);
 	#endif
 
-	#ifdef PROGRESS
+	if(percentage_bar)
 		std::cout << std::endl;
-	#endif
-
-
+	
 	//Graph is now G1
 
 	//This portion of the code will convert it to G2
@@ -909,9 +1104,9 @@ int main(int argc, char *argv[]){
 	for(auto& vertex_neighbours : adj){
 
 
-		#ifdef PROGRESS
+		if(percentage_bar)
 				progressBar("Collecting Stems",index,adj.size());
-			#endif
+		
 
 		if(vertex_neighbours.size() > 1){
 		
@@ -944,17 +1139,17 @@ int main(int argc, char *argv[]){
 	//Start from here
 	index = Vertices_Vector.size();
 		
-	#ifdef PROGRESS
+	if(percentage_bar)
 		std::cout << std::endl;
-	#endif
+	
 
 	//Converts Graph from G1 to G2
 	for(auto& saved_pair : saved_edges){
 	
-		#ifdef PROGRESS
+		if(percentage_bar){
 			if(index % 10000)
 				progressBar("Converting G1 to G2",number,saved_edges.size());
-		#endif
+		}
 		
 		#ifdef VERBOSE	
 		std::cout << "\n" << saved_pair.first << " -> " << saved_pair.second << std::endl;
@@ -1012,7 +1207,8 @@ int main(int argc, char *argv[]){
 		x++;
 	}
 	
-	
+
+
 	//Part B
 	#ifdef PARTB
 	
@@ -1099,44 +1295,68 @@ int main(int argc, char *argv[]){
 	
 	#endif //PartB
 	
+	if(percentage_bar)
+		std::cout << std::endl;
+
 	
-	//printGraph1(adj);
+	//Calculate Topological Order
 	std::vector<int> Sorted = topologicalSort(adj,Vertices_Vector);
 
-
-	#ifdef VERBOSE
-	std::cout << "---- Topological Order ----\n";
-	for(auto& node : Sorted){
-		std::cout << Vertices_Vector[node].component_id << " - " << Vertices_Vector[node].component_name << "\n";
-	}	
-	std::cout << std::endl;
-	std::cout << "---------------------------\n";
-	#endif
-
+	//Returns the circuit's paths
+	int PATHS = countPaths(Vertices_Vector);
 
 
 	#ifdef VERBOSE
+	//Print Netlist in Topological Order
+	printTopological(Sorted,Vertices_Vector);
+	
 	//Print Sucessors
 	printSucessors(adj,Vertices_Vector);
 
 	//Print Predecessors
 	printPredecessors(adj,Vertices_Vector);
+	#endif
 
+		
+	//#define BRUTEFORCE
+
+	#ifdef BRUTEFORCE
+	unsigned long N = pow(2,19);
+	
+	std::cout << INPUT << std::endl;
+
+	for(unsigned long i = 0; i < N; i++){
+		
+		if(percentage_bar){
+			if(i % 10000)
+				progressBar("Evaluating Circuit",i,N);
+			
+		}
+	
+		std::vector<int> input_vector;
+		std::bitset <64> input_bitset(i);
+	
+		for(int i = 0; i < INPUT; i++){
+			if(input_bitset[i]){
+				input_vector.push_back(1);
+			}
+			else if(!input_bitset[i]){
+				input_vector.push_back(0);
+			}
+		}
+	
+
+		//Evaluate Netlist
+		std::vector<int> output = evaluate(adj,Vertices_Vector,Sorted,input_vector);
+	}
+
+	
+		if(percentage_bar)
+		std::cout << std::endl;
 	#endif
 
 
-	int circuit_paths = 0;
 
-	for(auto& vertex : Vertices_Vector){
-//		std::cout << "Node "<<vertex.component_id << " has "<<vertex.paths << std::endl; 		
-
-		if(vertex.component_name == "OUTPUT"){
-			circuit_paths = circuit_paths + vertex.paths;
-		}
-	}
-
-	std::cout << circuit_paths <<std::endl;
-	
 	//End time
 	std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 	
@@ -1149,10 +1369,9 @@ int main(int argc, char *argv[]){
 		//Calculate Graph Size 
 		int bytes = getGraphSize(adj,Vertices_Vector);
 
-
-					stats = " LINES:"+std::to_string(index)+" NAND:"+std::to_string(NAND)+" AND:"+std::to_string(AND)+" OR:"+std::to_string(OR)+" NOR:"+std::to_string(NOR)+" NOT:"+std::to_string(NOT)+" BUFF:"+std::to_string(BUFF)+" INPUT:"+std::to_string(INPUT)+" OUTPUT:"+std::to_string(OUTPUT)+" KB:"+std::to_string(bytes/1024);
+		stats = " LINES:"+std::to_string(index)+" NAND:"+std::to_string(NAND)+" AND:"+std::to_string(AND)+" OR:"+std::to_string(OR)+" NOR:"+std::to_string(NOR)+" NOT:"+std::to_string(NOT)+" BUFF:"+std::to_string(BUFF)+" INPUT:"+std::to_string(INPUT)+" OUTPUT:"+std::to_string(OUTPUT)+" KB:"+std::to_string(bytes/1024)+" PATHS:"+std::to_string(PATHS);
 	}
-	
+
 	//Print to Graphviz file
 	if(print_graphviz){
 		//Write Graphviz file
@@ -1161,7 +1380,6 @@ int main(int argc, char *argv[]){
 		}else
 			printGraphviz(adj,Vertices_Vector);	
 	}
-
 
 	//From command line argument	
 	if(show_time){	
@@ -1177,9 +1395,10 @@ int main(int argc, char *argv[]){
 		if(time_choice == 3)
 			std::cout << file_path << " = " << (float) std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count()/1000000 << " [s]" << stats <<std::endl;
 
-	}else if(print_stats){
+	}
+	//Print Netlist Statistics	
+	else if(print_stats){
 		std::cout << stats << std::endl;	
 	}
-
 	return 0;
 }

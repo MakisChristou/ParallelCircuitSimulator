@@ -1,24 +1,22 @@
 digraph G {
-
-	subgraph cluster_0 {
-		node [style=filled];
-		color=blue
-		a0 -> a1[label = "Distinguish\nIndividual\nComponents"]; 
-		a1 -> a2[label="Add edges to\ngraph"];
-		a2 -> a3[label = "Add branch\nnodes"];
-		label = "Part A";
-	}
-
-	a0 [label="Read .bench file"]
-	a1 [label="Netlist Components"]
-	a2 [label="G1 graph"]
-	a3 [label="G2 graph"]
+	
+	a[label="Read netlist file"];
+	b[label="Construct Graph"];
+	c[label="Topological Sort"];
+	d[label="Read vector file"];
+	e[label="Serial Simulation"];
+	f[label="Parallel Simulation"];
+	g[label="Compare Simulations"];
 
 
+	a -> b;
+	b -> c;
+	c -> d;
+	d -> e;
+	e -> f;
+	f -> g;
 
-	start -> a0;
-	a3 -> end;
 
-	start [shape=Mdiamond];
-	end [shape=Msquare];
+
+
 }

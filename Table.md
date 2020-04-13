@@ -1,41 +1,3 @@
-## Compilation
-
-The simulator can be easily compiled by running `make` in the main project directory (asuming that the necesarry dependecies are met). The source code was compiled on Ubuntu 19.10 without any extra dependencies needed. Alternatively the program can be compiled by running `g++ simulator.cpp`.
-
-## CLI Arguments
-The following list contain the command line arguments that the simulator supports at the moment.
-- `./simulator -C <path/to/bench/file>`
-- `./simulator -T <unit_of_time>`
-- `./simulator -I <path/to/input/file>`
-- `./simulator -S`
-- `./simulator -G`
-- `./simulator -B`
-
-Their use case is explained in the following section
-
-## Example Usage
-These are some examples using the command line arguments that the simulator supports.
-
-`./simulator -C ISCAS/iscas89/s27.bench` runs the simulator on s27.bench
-
-`./simulator -C ISCAS/iscas89/s27.bench -T s` runs the simulator on s27.bench and returns in std out the execution time in seconds
-
-`./simulator -C ISCAS/iscas89/s27.bench -T ms` runs the simulator on s27.bench and returns in std out the execution time in miliseconds
-
-`./simulator -C ISCAS/iscas89/s208.1.bench -I TESTS/iscas89/test\ suite\ 1/s208.vec` runs the simulator on *s27.bench* with input file *s208.vec*
-
-`./simulator -C ISCAS/iscas89/s27.bench -G` runs the simulator on s27.bench and saves the netlist as a Graphviz file (only for small netlists)
-
-`./simulator -C ISCAS/iscas89/s27.bench -S` runs the simulator on s27.bench and returns the netlist stats in standard out
-
-`./simulator -C ISCAS/iscas89/s27.bench -B` runs the simulator on s27.bench with a progress bar for more verbose output (useful in larger circuits)
-
-
-## Scripts
-The script *gen_table.sh* is used to run the simulator on all the inputs from *ISCAS89* and *ISCAS85* benchmark suits and save the execution time in ms as well as each netlist stats in a text file. Then a python script called *Results.py* is used to parse the file and generate a markdown table, the one shown in the PDF.
-
-## Netlist Statistics
-
 | Circuit | Time (ms) | Lines | # of Nand | # of And | #of Nor | # of Not | # of Buff | # of Inputs | # of Outputs |# Paths | Graph Size (KB) 
 | ------------- |-------------| ------------- |-------------| ------------- |-------------|------------- |-------------|------------- |-------------- |------------|-------------|
 | c1355 | 22.574 | 619  | 416  | 56  | 0  | 40  | 32  | 41  | 32  | 4173216 | 81  | 
@@ -86,13 +48,3 @@ The script *gen_table.sh* is used to run the simulator on all the inputs from *I
 | s526 | 2.147 | 244  | 22  | 56  | 35  | 52  | 0  | 24  | 27  | 410 | 32  | 
 | s38417 | 8413.21 | 25585  | 2050  | 4154  | 2279  | 13470  | 0  | 1664  | 1742  | 1391579 | 3330  | 
 | s15850 | 1526.33 | 11067  | 968  | 1619  | 151  | 6324  | 0  | 611  | 684  | 164738046 | 1439  | 
-
-
-<!---
-## Part A Diagram
-![flowchart.png](:/fa1554a314d04b29b0887fc7817a7406)
--->
-
-
-
-

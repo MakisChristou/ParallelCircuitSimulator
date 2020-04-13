@@ -23,6 +23,7 @@ buff = []
 inputt = []
 output = []
 kbb = []
+paths = []
 
 filename = "Results"
 
@@ -59,6 +60,7 @@ for i in content:
     pos12 = i.find("INPUT")
     pos13 = i.find("OUTPUT")
     pos14 = i.find("KB")
+    pos15 = i.find("PATHS")
 
     ##################################
     pos5 = pos5 + 6
@@ -135,21 +137,31 @@ for i in content:
 
     pos14 = pos14 + 3
     
-    temp_kb = i[pos14:-1]
+    temp_kb = i[pos14:pos15]
 
     kbb.append(temp_kb)
+
+    ################################
+
+    pos15 = pos15 + 6
+
+    temp_path = i[pos15:-1]
+
+    paths.append(temp_path)
+
+    ###############################
 
 
 # Write Markdown Matrix
 
-file= open("time.md","w") 
+file= open("Table.md","w") 
 
-file.write("| Circuit Name | Time (ms) | Lines | # of Nand | # of And | #of Nor | # of Not | # of Buff | # of Inputs | # of Outputs | Graph Size (KB) \n")
-file.write("| ------------- |-------------| ------------- |-------------| ------------- |-------------|------------- |-------------|------------- |-------------|-------------|\n")
+file.write("| Circuit | Time (ms) | Lines | # of Nand | # of And | #of Nor | # of Not | # of Buff | # of Inputs | # of Outputs |# Paths | Graph Size (KB) \n")
+file.write("| ------------- |-------------| ------------- |-------------| ------------- |-------------|------------- |-------------|------------- |-------------- |------------|-------------|\n")
 
 
-for f, b,lin,na,a,nr,nt,bf,inp,out,kk in zip(circuits, y,lines,nand,andd,nor,nott,buff,inputt,output,kbb):
+for f, b,lin,na,a,nr,nt,bf,inp,out,pth,kk in zip(circuits, y,lines,nand,andd,nor,nott,buff,inputt,output,paths,kbb):
         #print(f, b)
-        file.write("| " + f + " | " + str(b) + " | "+lin+" | "+na+" | "+a+" | "+nr+" | "+nt+" | "+bf+" | " + inp +" | " + out +" | "+kk+" | \n")
+        file.write("| " + f + " | " + str(b) + " | "+lin+" | "+na+" | "+a+" | "+nr+" | "+nt+" | "+bf+" | " + inp +" | " + out +" | "+pth + " | " + kk+" | \n")
 
 
