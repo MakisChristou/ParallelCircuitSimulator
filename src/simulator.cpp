@@ -7,9 +7,8 @@
 #include <math.h>
 #include <chrono>
 #include <string>
-#include <bits/stdc++.h>
-#include <stdlib.h>
 #include <set>
+#include <bitset>
 #include <utility>
 #include <list> 
 #include <stack> 
@@ -23,7 +22,7 @@
 #define G2
 
 //If you want Part B to be enabled uncomment the following line
-//#define PARTB
+#define PARTB
 
 //Global Initializations
 int time_choice = 2; //default is ms
@@ -33,6 +32,28 @@ bool print_stats = false;
 bool argument_flag = false;
 bool print_graphviz = false;
 bool percentage_bar = false;
+
+//Timer Class for performance evaluation
+class Timer{
+	public:
+	//Start timer
+	std::chrono::steady_clock::time_point start, end;
+	std::chrono::duration<float> duration;
+
+	//Constructor
+	Timer()
+	{
+		start = std::chrono::steady_clock::now();
+	}
+
+	//Destructor
+	~Timer()
+	{
+		end = std::chrono::steady_clock::now();
+		duration = end-start; //duration in seconds
+		float ms = duration.count() * 1000.0f;
+	}
+};
 
 // Prints correct usage
 int print_usage(){
@@ -530,7 +551,7 @@ void printTopological(std::vector<int> Sorted, std::vector <struct VertexData> V
 
 //Evaluates a single gate
 int evaluateGate(std::vector<int> input_vector,std::string component_name){
-
+	
 	int output = -1;
 	
 	//Check if input vector is empty
@@ -695,6 +716,7 @@ std::vector<int> evaluate(std::vector<std::vector<int>> adj, std::vector <struct
 }
 
 
+
 //Main Function
 int main(int argc, char *argv[]){
 	
@@ -807,7 +829,7 @@ int main(int argc, char *argv[]){
 		}
 	}
 	
-	//At leas specify an input file
+	//At least specify an input file
 	if(argument_flag == false){
 		std::cout << "Please specify an input file\n";
 		print_usage();
@@ -822,7 +844,6 @@ int main(int argc, char *argv[]){
 	}
 
 	
-
   //BENCH FILE
   bench_file.open(file_path);
 		
@@ -841,7 +862,7 @@ int main(int argc, char *argv[]){
 	std::vector<std::string> Temp;
 	
 
-  //File opening
+  //File opening (bench_file)
   if (!bench_file) {
     std::cout << "Error Opening Bench File" << std::endl;
 		print_usage();
@@ -853,6 +874,69 @@ int main(int argc, char *argv[]){
     }
   }
 	
+
+	//Declare file type	
+	int file_type = -1; // 0 = .txt 1 = .vec 2 = .comp.10 3 = .benchtest.in
+
+	//If input vector file not given
+	if(!test_given){
+		//std::cout << "No test/input file given. Simulating for 2^N patterns\n";
+		//print_usage();
+		//return -1;
+	}
+	//If input vector file is given
+	else{
+
+		//Vector where input tests are saved	
+		std::vector<std::string> Tests;
+
+		//Parse input/test file
+  	if (!input_file) {
+    	std::cout << "Error Opening Vector File" << std::endl;
+			print_usage();
+    	return -1;
+  	}
+  	else{
+    	while(std::getline(input_file, current_line)){
+      	Tests.push_back(current_line);
+    	}
+  	}
+
+		// Four types of input file
+		// .txt .vec .comp.10 .benchtest.in
+		
+		
+		//Check if input file is one of the 4 types		
+		if(input_path.substr(input_path.length() - 4) == ".txt" ){
+		
+			file_type = 0;	
+
+		}	
+		else if(input_path.substr(input_path.length() - 4) == ".vec"){
+
+			file_type = 1;	
+
+		}		
+		else if(input_path.substr(input_path.length() - 8) == ".comp.10"){
+
+			file_type = 2;	
+
+		}	
+		else if(input_path.substr(input_path.length() - 13) == ".benchtest.in"){
+
+			file_type = 3;	
+
+		}
+
+		//Not a valid filetype
+		if(file_type == -1){
+			std::cout << "Wrong input file type!" << std::endl;
+			print_usage();
+			return -1;
+		}
+	}
+
+	//Done saving input file
 	
 	//Netlist Statistics Counters
 	int index = 0;
@@ -864,8 +948,6 @@ int main(int argc, char *argv[]){
 	int OR=0;
 	int NOR=0;
 	int NOT=0;
-			
-
 	
 	//File preprocessing
 	for(auto& line : Lines){
@@ -1206,95 +1288,8 @@ int main(int argc, char *argv[]){
 		}
 		x++;
 	}
-	
 
 
-	//Part B
-	#ifdef PARTB
-	
-	//Check if in input file is given
-	if(!test_given){
-		std::cout << "No test/input file given\n";
-		print_usage();
-		return -1;
-	}	
-	
-	std::vector<std::string> Tests;
-
-	//Parse input/test file
-  if (!input_file) {
-    std::cout << "Error Opening Vector File" << std::endl;
-		print_usage();
-    return -1;
-  }
-  else{
-    while(std::getline(input_file, current_line)){
-      Tests.push_back(current_line);
-    }
-  }
-
-	// Four types of input file
-	// .txt .vec .comp.10 .benchtest.in
-		
-	int file_type = -1; // 0 = .txt 1 = .vec 2 = .comp.10 3 = .benchtest.in
-		
-	//Check if input file is one of the 4 types		
-	if(input_path.substr(input_path.length() - 4) == ".txt" ){
-		
-		file_type = 0;	
-
-	}	
-	else if(input_path.substr(input_path.length() - 4) == ".vec"){
-
-		file_type = 1;	
-
-	}	
-	else if(input_path.substr(input_path.length() - 8) == ".comp.10"){
-
-		file_type = 2;	
-
-	}	
-	else if(input_path.substr(input_path.length() - 13) == ".benchtest.in"){
-
-		file_type = 3;	
-
-	}
-
-	//Not a valid filetype
-	if(file_type == -1){
-		std::cout << "Wrong file type!" << std::endl;
-		print_usage();
-		return -1;
-	}
-	
-
-	//File Parsing	
-	//.txt
-	if(file_type == 0){
-
-
-
-	}
-	//.vec
-	else if(file_type == 1){
-
-
-
-	}
-	//.comp.10
-	else if(file_type == 2){
-
-
-
-	}
-	///benchtest.in
-	else if(file_type == 3){
-
-
-	}
-	
-	#endif //PartB
-	
 	if(percentage_bar)
 		std::cout << std::endl;
 
@@ -1317,45 +1312,133 @@ int main(int argc, char *argv[]){
 	printPredecessors(adj,Vertices_Vector);
 	#endif
 
-		
-	//#define BRUTEFORCE
 
-	#ifdef BRUTEFORCE
-	unsigned long N = pow(2,19);
+	#ifdef PARTB // Part B starts here
 	
-	std::cout << INPUT << std::endl;
+	//If input/test file is given
+	if(test_given){	
+		//File Parsing	
+		//.txt
+		if(file_type == 0){
 
-	for(unsigned long i = 0; i < N; i++){
+
+
+		}
+		//.vec
+		else if(file_type == 1){
+
+
+
+		}
+		//.comp.10
+		else if(file_type == 2){
+
+
+
+		}
+		///benchtest.in
+		else if(file_type == 3){
+
+
+		}
+	}	
+
+
+	//If input/test file is not given
+	if(!test_given){
+
+		std::cout << "\nNo test/input file given. Simulating for 2^" << INPUT << " patterns\n";
+
+		if(INPUT > 50){
+			std::cout << "Circuit has "<< INPUT<<" inputs. Can't Bruteforce it.\n";
+			return -1;
+		}
+
+
+
+		unsigned long N = pow(2,INPUT);
 		
-		if(percentage_bar){
-			if(i % 10000)
-				progressBar("Evaluating Circuit",i,N);
+		std::cout << "Simulating for " << N << " patterns\n\n";	
+
+		for(unsigned long i = 0; i < N; i++){
+
+			//Measure time
+			Timer timer;			
+			/*
+			if(percentage_bar){
+				if(i % 10000)
+					progressBar("Evaluating Circuit",i,N);
+			}
+	*/
+			std::vector<int> input_vector;
+			std::bitset <64> input_bitset(i);
+	
+			for(int i = 0; i < INPUT; i++){
+				if(input_bitset[i]){
+					input_vector.push_back(1);
+				}
+				else if(!input_bitset[i]){
+					input_vector.push_back(0);
+				}
+			}
 			
-		}
-	
-		std::vector<int> input_vector;
-		std::bitset <64> input_bitset(i);
-	
-		for(int i = 0; i < INPUT; i++){
-			if(input_bitset[i]){
-				input_vector.push_back(1);
-			}
-			else if(!input_bitset[i]){
-				input_vector.push_back(0);
-			}
-		}
-	
+			//Evaluate Netlist
+			std::vector<int> output = evaluate(adj,Vertices_Vector,Sorted,input_vector);
+		
+			if((i % 1000 == 0)){
 
-		//Evaluate Netlist
-		std::vector<int> output = evaluate(adj,Vertices_Vector,Sorted,input_vector);
+				std::chrono::duration<float> duration = timer.duration;
+
+				//std::cout << (float) std::chrono::duration_cast<std::chrono::microseconds>(timer.duration).count()/1000 << std::endl;
+
+				//duration of 1 input pattern in ms
+				float pattern_time = (float) std::chrono::duration_cast<std::chrono::microseconds>(timer.duration).count()/1000;
+
+				float time = (float)1000.0/pattern_time;
+
+				int percentage = (int)((i+1)*100.0/N);
+
+				//[48165 K/s][total 2080000][Prob 37.2%][50% in 21.2s]
+				
+				if(pattern_time!= 0){
+
+					int done_in_s = (int)((N-i)*pattern_time/1000);
+					int done_in_m = (int)((N-i)*pattern_time/1000/60);
+					int done_in_h = (int)((N-i)*pattern_time/1000/60/60);
+					int done_in_d = (int)((N-i)*pattern_time/1000/60/60/24);
+					int done_in_mon = (int)((N-i)*pattern_time/1000/60/60/24/30);
+					int done_in_y = (int)((N-i)*pattern_time/1000/60/60/24/30/12);
+
+
+					if(done_in_s < 180)
+						std::cout << "\r" << "[" << (int)time<< " Inputs/s]"<< "[total "<<i << "]"<< "[" << percentage << "% done][100% in " << done_in_s << " sec]"<<std::flush;
+
+					else if(done_in_m < 180)
+						std::cout << "\r" << "[" << (int)time<< " Inputs/s]"<< "[total "<<i << "]"<< "[" << percentage << "% done][100% in " << done_in_m << " min]"<<std::flush;
+
+					else if(done_in_h < 48)
+						std::cout << "\r" << "[" << (int)time<< " Inputs/s]"<< "[total "<<i << "]"<< "[" << percentage << "% done][100% in " << done_in_h << " hours]"<<std::flush;
+
+					else if(done_in_d < 90)
+						std::cout << "\r" << "[" << (int)time<< " Inputs/s]"<< "[total "<<i << "]"<< "[" << percentage << "% done][100% in " << done_in_h << " days]"<<std::flush;
+
+					else if(done_in_mon < 24)
+						std::cout << "\r" << "[" << (int)time<< " Inputs/s]"<< "[total "<<i << "]"<< "[" << percentage << "% done][100% in " << done_in_h << " months]"<<std::flush;
+
+					else
+						std::cout << "\r" << "[" << (int)time<< " Inputs/s]"<< "[total "<<i << "]"<< "[" << percentage << "% done][100% in " << done_in_h << " years]"<<std::flush;
+
+				}
+			}
+		}
+
+	
+		std::cout << std::endl;
+
+
 	}
 
-	
-		if(percentage_bar)
-		std::cout << std::endl;
-	#endif
-
-
+	#endif //PartB
 
 	//End time
 	std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
@@ -1396,9 +1479,11 @@ int main(int argc, char *argv[]){
 			std::cout << file_path << " = " << (float) std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count()/1000000 << " [s]" << stats <<std::endl;
 
 	}
+
 	//Print Netlist Statistics	
 	else if(print_stats){
 		std::cout << stats << std::endl;	
 	}
+
 	return 0;
 }
