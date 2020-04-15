@@ -15,6 +15,20 @@
 #include <chrono>
 #include <queue>
 #include <thread>
+#include <mutex>
+
+//For printing thread info
+std::mutex g_display_mutex;
+
+//For saving thread results
+std::mutex g_vector_mutex;
+
+//Vector with Results (Single Threaded)
+std::vector <std::pair<std::vector<int>,std::vector<int>>> Response_Vector_Single;
+
+//Vector with Results (Multithreaded Threaded)
+std::vector <std::pair<std::vector<int>,std::vector<int>>> Response_Vector_Multi;
+
 
 //If you want verbose output uncomment the following line
 //#define VERBOSE
@@ -33,6 +47,7 @@ bool print_stats = false;
 bool argument_flag = false;
 bool print_graphviz = false;
 bool percentage_bar = false;
+int threads = -2;
 
 //Timer Class for performance evaluation
 class Timer{
@@ -58,7 +73,7 @@ class Timer{
 
 // Prints correct usage
 int print_usage(){
-	std::cout<<"Usage: simulator [-C <bench_path>] [-I <input_path>] [-T <time>] [-S ] [-G ] [-B ]\n";
+	std::cout<<"Usage: simulator [-C <bench_path>] [-I <input_path>] [-T <time>] [-P <number_of_threads>] [-S ] [-G ] [-B ]\n";
 	return 0;
 }
 
@@ -692,7 +707,7 @@ std::vector<int> evaluate(std::vector<std::vector<int>> adj, std::vector <struct
 }
 
 //Progress bar for simulation
-void progressSim(unsigned long long i, unsigned long long N, Timer timer){
+void progressSim(unsigned long long i, unsigned long long N, Timer timer, bool multithreaded, unsigned long long n){
 
 
 			std::chrono::duration<float> duration = timer.duration;
@@ -718,6 +733,11 @@ void progressSim(unsigned long long i, unsigned long long N, Timer timer){
 					unsigned long long done_in_mon = (int)((N-i)*pattern_time/1000/60/60/24/30);
 					unsigned long long done_in_y = (int)((N-i)*pattern_time/1000/60/60/24/30/12);
 
+					if(multithreaded){
+						time = time * n;
+						i = i * n;
+					}
+
 
 					if(done_in_s < 180)
 						std::cout << "\r" << "[" << (unsigned long long)time<< " P/s]"<< "[total "<<i << "]"<< "[" << percentage << "% done][100% in " << done_in_s << " sec]"<<std::flush;
@@ -740,6 +760,69 @@ void progressSim(unsigned long long i, unsigned long long N, Timer timer){
 				}
 			}
 
+
+
+}
+
+//Main Simulation Loop for bruteforce
+void doWork1(unsigned long long start, unsigned long long end, int INPUT, std::vector<std::vector<int>> adj, std::vector <struct VertexData> Vertices_Vector, std::vector<int> Sorted, bool updateScreen, unsigned long long n){
+
+
+		unsigned long long N = end-start;
+
+		/*
+		g_display_mutex.lock();
+			std::thread::id this_id = std::this_thread::get_id();
+  		std::cout << "thread " << this_id << " starting with range "<<start<<" - "<<end << " total: "<< N << std::endl;
+		g_display_mutex.unlock();
+		*/
+		//Sleep for 1 second
+		std::this_thread::sleep_for (std::chrono::seconds(1));
+		//std::cout << "No test/input file given. Bruteforcing Circuit.\n";
+
+		//So nothing blows up
+		if(INPUT > 50){
+			std::cout << "Circuit has "<< INPUT<<" inputs. Can't Bruteforce it.\n";
+			return ;
+		}
+
+//		unsigned long N = pow(2,INPUT);
+		
+		//std::cout << "Patterns: " << N << "\n";	
+
+		for(unsigned long i = 0; i < N; i++){
+
+			//Measure time
+			Timer timer;			
+
+			//Declarations
+			std::vector<int> input_vector;
+			std::bitset <64> input_bitset(i);
+	
+			for(int i = 0; i < INPUT; i++){
+				if(input_bitset[i]){
+					input_vector.push_back(1);
+				}
+				else if(!input_bitset[i]){
+					input_vector.push_back(0);
+				}
+			}
+			
+			//Evaluate Netlist
+			std::vector<int> output = evaluate(adj,Vertices_Vector,Sorted,input_vector);
+		
+			if(updateScreen){
+
+				//Pretty Printing
+				g_display_mutex.lock();
+					progressSim(i,N,timer,true,n);
+				g_display_mutex.unlock();
+			}
+		}
+}
+
+//Main Simulation Loop for given inputs
+void doWork2(unsigned long long start, unsigned long long end){
 
 
 }
@@ -853,6 +936,22 @@ int main(int argc, char *argv[]){
 				percentage_bar = true;
 			}
 
+			//Threads argument
+			if((std::string)argv[i] == "-P"){
+				threads = -1; //Use all available threads
+				if(argc == 2){
+					std::cout << "Specify .bench path\n";
+					print_usage();
+					return -1;
+				}else{
+					if(argc > i+1)					
+						threads = atoi(argv[i+1]);
+					else{
+						std::cout << "Using all available threads\n";
+					}
+				}
+			}
+
 		}
 	}
 	
@@ -870,7 +969,6 @@ int main(int argc, char *argv[]){
 		return -1;
 	}
 
-	
   //BENCH FILE
   bench_file.open(file_path);
 		
@@ -880,8 +978,8 @@ int main(int argc, char *argv[]){
 
   //Initialization
   std::stringstream stream; //for "prints"
-
-
+	
+	//For bench file
 	std::string current_line;
 	
 	//Bench File Vector	
@@ -1343,8 +1441,6 @@ int main(int argc, char *argv[]){
 		//.txt
 		if(file_type == 0){
 
-
-
 		}
 		//.vec
 		else if(file_type == 1){
@@ -1353,26 +1449,19 @@ int main(int argc, char *argv[]){
 			Tests.erase(Tests.begin()); //delete first item
 			Tests.erase(Tests.end()); //delete last item
 
-		
-
-
 		}
 		//.comp.10
 		else if(file_type == 2){
-
-
 
 		}
 		///benchtest.in
 		else if(file_type == 3){
 
-
 		}
 	}	
 
 
-
-	//Single Threaded Simulation
+	//Single Threaded Simulation for input file
 	if(test_given){
 
 		unsigned long long N = Tests.size();	
@@ -1404,7 +1493,7 @@ int main(int argc, char *argv[]){
 			std::vector<int> output = evaluate(adj,Vertices_Vector,Sorted,input_vector);
 			
 			//Pretty Printing
-			progressSim(i,N,timer);
+			progressSim(i,N,timer,false,0);
 			
 			i++;
 		}
@@ -1414,13 +1503,69 @@ int main(int argc, char *argv[]){
 
 	}
 
+	//Multithreaded Simulation	
+	if(threads > -2){
+		
+		std::cout << "Parallel Simulation\n";
 
+		unsigned long long n;
 
-	std::thread worker();
+		if(threads == -1){
+			n = std::thread::hardware_concurrency();
+		}else{
+			n = threads;
+		}
+		std::cout << "Threads Used: " << n << std::endl;
+
+		//Construct Ranges
+		unsigned long long start_range = 0;
+		unsigned long long end_range = 0;
+
+		unsigned long long N = pow(2,INPUT);
+
+		std::cout << "Patterns: " << N << "\n";	
+
+		std::vector <std::pair<unsigned long long , unsigned long long>> Range_Vector;
+
+		//Split work equally for N threads
+		for(int i = 1; i<(n+1); i++){
+			end_range = start_range+(N/n)-1;
+			std::pair<unsigned long long,unsigned long long> temp_pair;
+			temp_pair.first = start_range;
+			temp_pair.second = end_range;
+			Range_Vector.push_back(temp_pair);
+			start_range = end_range+1;
+		}
 	
+		//Thread objects are stored here
+		std::vector <std::thread> Thread_Vector;
+	
+		//Start n threads
+		for(unsigned long long i = 0; i < n; i++){
+		
+			//Last thread prints to screen
+			if(i == n-1){
+				Thread_Vector.emplace_back(doWork1,Range_Vector[i].first,Range_Vector[i].second,INPUT,adj,Vertices_Vector,Sorted, true, n);
+			}else{
+				Thread_Vector.emplace_back(doWork1,Range_Vector[i].first,Range_Vector[i].second,INPUT,adj,Vertices_Vector,Sorted, false, n);
+			}
+		}
+		
 
+		//Wait for all threads to finish
+		for(auto& t : Thread_Vector){		
+			t.join();	
+		}
+
+		std::cout << std::endl;
+
+	}
+	//Single Threaded Simulation
+	
 	//If input/test file is not given
 	if(!test_given){
+
+		std::cout << "Serial Simulation\n";
 
 		//std::cout << "No test/input file given. Bruteforcing Circuit.\n";
 
@@ -1456,7 +1601,7 @@ int main(int argc, char *argv[]){
 			std::vector<int> output = evaluate(adj,Vertices_Vector,Sorted,input_vector);
 			
 			//Pretty Printing
-			progressSim(i,N,timer);
+			progressSim(i,N,timer,false,0);
 
 		}
 		
