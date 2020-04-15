@@ -14,6 +14,7 @@
 #include <stack> 
 #include <chrono>
 #include <queue>
+#include <thread>
 
 //If you want verbose output uncomment the following line
 //#define VERBOSE
@@ -353,33 +354,8 @@ void printGraph1(std::vector<std::vector<int>>& adj){
 //Progress Bar function
 void progressBar(std::string message, unsigned long x, unsigned long y){
 	
-	int percentage = (int)((x+1)*100.0/y);
-	std::string progress = message + " :[";
-
-	
-	std::string bar = " [..........]";
-	bar = " [";
-	
-	if(percentage < 10)
-		progress = message + " :[  ";
-
-	if(percentage >= 10 && percentage < 100)
-		progress = message + " :[ ";
-
-	for(int i = 0; i < percentage/10; i++){		
-		bar = bar + "#";	
-	}
-
-	int left = 10-percentage/10;
-
-	for(int i = 0; i < left; i++){
-		bar = bar + ".";	
-	}
-	
-	bar = bar + "]";	
-	
-	
-	std::cout << "\r"<<progress<<percentage<<"%]"<<bar<<std::flush;
+	int percentage = (int)((x+1)*100.0/y);	
+	std::cout << "\r"<< "["<<message<<"]["<<percentage<<"%]"<<std::flush;
 
 }
 
@@ -415,7 +391,7 @@ std::vector<int> topologicalSort(std::vector<std::vector<int>> adj, std::vector 
      	waiting.pop();
 			
 			if(percentage_bar){
-				if(progress % 1000000)
+				if((progress == 0) || (progress % 100 == 0) || (progress == Vertices_Vector.size() -1))
 					progressBar("Topological Sort",progress,Vertices_Vector.size());
 			}
 
@@ -715,7 +691,58 @@ std::vector<int> evaluate(std::vector<std::vector<int>> adj, std::vector <struct
 	return output;
 }
 
+//Progress bar for simulation
+void progressSim(unsigned long long i, unsigned long long N, Timer timer){
 
+
+			std::chrono::duration<float> duration = timer.duration;
+
+			//Duration of 1 input pattern in ms
+			float pattern_time = (float) std::chrono::duration_cast<std::chrono::microseconds>(timer.duration).count()/1000;
+				
+			float time = (float)1000.0/pattern_time;
+
+			int percentage = (int)((i+1)*100.0/N);
+			
+			int x = (int)(1000/pattern_time);
+					
+			//Update every second
+			if((i == 1) || (i % x == 0) || (i == N - 1)){
+				
+				if(pattern_time!= 0){
+
+					unsigned long long done_in_s = (int)((N-i)*pattern_time/1000);
+					unsigned long long done_in_m = (int)((N-i)*pattern_time/1000/60);
+					unsigned long long done_in_h = (int)((N-i)*pattern_time/1000/60/60);
+					unsigned long long done_in_d = (int)((N-i)*pattern_time/1000/60/60/24);
+					unsigned long long done_in_mon = (int)((N-i)*pattern_time/1000/60/60/24/30);
+					unsigned long long done_in_y = (int)((N-i)*pattern_time/1000/60/60/24/30/12);
+
+
+					if(done_in_s < 180)
+						std::cout << "\r" << "[" << (unsigned long long)time<< " P/s]"<< "[total "<<i << "]"<< "[" << percentage << "% done][100% in " << done_in_s << " sec]"<<std::flush;
+
+					else if(done_in_m < 180)
+						std::cout << "\r" << "[" << (unsigned long long)time<< " P/s]"<< "[total "<<i << "]"<< "[" << percentage << "% done][100% in " << done_in_m << " min]"<<std::flush;
+
+					else if(done_in_h < 48)
+						std::cout << "\r" << "[" << (unsigned long long)time<< " P/s]"<< "[total "<<i << "]"<< "[" << percentage << "% done][100% in " << done_in_h << " hours]"<<std::flush;
+
+					else if(done_in_d < 90)
+						std::cout << "\r" << "[" << (unsigned long long)time<< " P/s]"<< "[total "<<i << "]"<< "[" << percentage << "% done][100% in " << done_in_d << " days]"<<std::flush;
+
+					else if(done_in_mon < 24)
+						std::cout << "\r" << "[" << (unsigned long long)time<< " P/s]"<< "[total "<<i << "]"<< "[" << percentage << "% done][100% in " << done_in_mon << " months]"<<std::flush;
+
+					else
+						std::cout << "\r" << "[" << (unsigned long long)time<< " P/s]"<< "[total "<<i << "]"<< "[" << percentage << "% done][100% in " << done_in_y << " years]"<<std::flush;
+
+				}
+			}
+
+
+
+}
 
 //Main Function
 int main(int argc, char *argv[]){
@@ -875,8 +902,11 @@ int main(int argc, char *argv[]){
   }
 	
 
-	//Declare file type	
+	//Test Inputs delcarations
 	int file_type = -1; // 0 = .txt 1 = .vec 2 = .comp.10 3 = .benchtest.in
+
+	//Vector where input tests are saved	
+	std::vector<std::string> Tests;
 
 	//If input vector file not given
 	if(!test_given){
@@ -884,12 +914,10 @@ int main(int argc, char *argv[]){
 		//print_usage();
 		//return -1;
 	}
+
 	//If input vector file is given
 	else{
-
-		//Vector where input tests are saved	
-		std::vector<std::string> Tests;
-
+	
 		//Parse input/test file
   	if (!input_file) {
     	std::cout << "Error Opening Vector File" << std::endl;
@@ -953,7 +981,7 @@ int main(int argc, char *argv[]){
 	for(auto& line : Lines){
 		
 		if(percentage_bar){
-			if(index % 10000)
+			if((index == 0) || (index % 100 == 0) || (index == Lines.size()-1))
 				progressBar("Preprocessing File",index,Lines.size());			
 		}	
 	
@@ -1001,7 +1029,7 @@ int main(int argc, char *argv[]){
 	for(auto& line : Lines){
 			
 		if(percentage_bar){
-			if(index % 10000)
+			if((index == 0) || (index % 100 == 0) || (index == Lines.size() - 1))
 				progressBar("Identifying Gates",index,Lines.size());			
 		}
 		
@@ -1126,7 +1154,7 @@ int main(int argc, char *argv[]){
 	for(auto& vertex : Vertices_Vector){
 
 		if(percentage_bar){
-			if(index % 10000)
+			if((index == 0) || (index % 100 == 0) || (index == Vertices_Vector.size()-1))
 				progressBar("Constructing G1 Graph",index,Vertices_Vector.size());			
 		}
 	
@@ -1187,7 +1215,8 @@ int main(int argc, char *argv[]){
 
 
 		if(percentage_bar)
-				progressBar("Collecting Stems",index,adj.size());
+				if((index == 0) || (index % 100 == 0) || (index == adj.size()-1))
+					progressBar("Collecting Stems",index,adj.size());
 		
 
 		if(vertex_neighbours.size() > 1){
@@ -1220,18 +1249,11 @@ int main(int argc, char *argv[]){
 	
 	//Start from here
 	index = Vertices_Vector.size();
-		
-	if(percentage_bar)
-		std::cout << std::endl;
 	
+	//Index must not be reset here
 
 	//Converts Graph from G1 to G2
 	for(auto& saved_pair : saved_edges){
-	
-		if(percentage_bar){
-			if(index % 10000)
-				progressBar("Converting G1 to G2",number,saved_edges.size());
-		}
 		
 		#ifdef VERBOSE	
 		std::cout << "\n" << saved_pair.first << " -> " << saved_pair.second << std::endl;
@@ -1315,7 +1337,7 @@ int main(int argc, char *argv[]){
 
 	#ifdef PARTB // Part B starts here
 	
-	//If input/test file is given
+	//Preprocess Input File
 	if(test_given){	
 		//File Parsing	
 		//.txt
@@ -1326,7 +1348,12 @@ int main(int argc, char *argv[]){
 		}
 		//.vec
 		else if(file_type == 1){
+			
+			//Delete first and last line
+			Tests.erase(Tests.begin()); //delete first item
+			Tests.erase(Tests.end()); //delete last item
 
+		
 
 
 		}
@@ -1344,32 +1371,75 @@ int main(int argc, char *argv[]){
 	}	
 
 
+
+	//Single Threaded Simulation
+	if(test_given){
+
+		unsigned long long N = Tests.size();	
+		unsigned long long i = 0;
+
+		for(auto& pattern : Tests){
+
+			//Measure time
+			Timer timer;			
+
+			//Declarations
+			std::vector<int> input_vector;
+
+
+			for(int i = 0; i < pattern.size(); i++){
+		
+				if(pattern[i] == '0'){
+					input_vector.push_back(0);
+				}
+				else if(pattern[i] == '1'){
+					input_vector.push_back(1);
+				}
+				else if(pattern[i] == '2'){
+					//Don't care
+				}
+			}
+
+			//Evaluate Netlist
+			std::vector<int> output = evaluate(adj,Vertices_Vector,Sorted,input_vector);
+			
+			//Pretty Printing
+			progressSim(i,N,timer);
+			
+			i++;
+		}
+
+	//Pretty Printing
+	std::cout << std::endl;
+
+	}
+
+
+
+	std::thread worker();
+	
+
 	//If input/test file is not given
 	if(!test_given){
 
-		std::cout << "\nNo test/input file given. Simulating for 2^" << INPUT << " patterns\n";
+		//std::cout << "No test/input file given. Bruteforcing Circuit.\n";
 
+		//So nothing blows up
 		if(INPUT > 50){
 			std::cout << "Circuit has "<< INPUT<<" inputs. Can't Bruteforce it.\n";
 			return -1;
 		}
 
-
-
 		unsigned long N = pow(2,INPUT);
 		
-		std::cout << "Simulating for " << N << " patterns\n\n";	
+		std::cout << "Patterns: " << N << "\n";	
 
 		for(unsigned long i = 0; i < N; i++){
 
 			//Measure time
 			Timer timer;			
-			/*
-			if(percentage_bar){
-				if(i % 10000)
-					progressBar("Evaluating Circuit",i,N);
-			}
-	*/
+
+			//Declarations
 			std::vector<int> input_vector;
 			std::bitset <64> input_bitset(i);
 	
@@ -1384,58 +1454,14 @@ int main(int argc, char *argv[]){
 			
 			//Evaluate Netlist
 			std::vector<int> output = evaluate(adj,Vertices_Vector,Sorted,input_vector);
-		
-			if((i % 1000 == 0)){
+			
+			//Pretty Printing
+			progressSim(i,N,timer);
 
-				std::chrono::duration<float> duration = timer.duration;
-
-				//std::cout << (float) std::chrono::duration_cast<std::chrono::microseconds>(timer.duration).count()/1000 << std::endl;
-
-				//duration of 1 input pattern in ms
-				float pattern_time = (float) std::chrono::duration_cast<std::chrono::microseconds>(timer.duration).count()/1000;
-
-				float time = (float)1000.0/pattern_time;
-
-				int percentage = (int)((i+1)*100.0/N);
-
-				//[48165 K/s][total 2080000][Prob 37.2%][50% in 21.2s]
-				
-				if(pattern_time!= 0){
-
-					int done_in_s = (int)((N-i)*pattern_time/1000);
-					int done_in_m = (int)((N-i)*pattern_time/1000/60);
-					int done_in_h = (int)((N-i)*pattern_time/1000/60/60);
-					int done_in_d = (int)((N-i)*pattern_time/1000/60/60/24);
-					int done_in_mon = (int)((N-i)*pattern_time/1000/60/60/24/30);
-					int done_in_y = (int)((N-i)*pattern_time/1000/60/60/24/30/12);
-
-
-					if(done_in_s < 180)
-						std::cout << "\r" << "[" << (int)time<< " Inputs/s]"<< "[total "<<i << "]"<< "[" << percentage << "% done][100% in " << done_in_s << " sec]"<<std::flush;
-
-					else if(done_in_m < 180)
-						std::cout << "\r" << "[" << (int)time<< " Inputs/s]"<< "[total "<<i << "]"<< "[" << percentage << "% done][100% in " << done_in_m << " min]"<<std::flush;
-
-					else if(done_in_h < 48)
-						std::cout << "\r" << "[" << (int)time<< " Inputs/s]"<< "[total "<<i << "]"<< "[" << percentage << "% done][100% in " << done_in_h << " hours]"<<std::flush;
-
-					else if(done_in_d < 90)
-						std::cout << "\r" << "[" << (int)time<< " Inputs/s]"<< "[total "<<i << "]"<< "[" << percentage << "% done][100% in " << done_in_h << " days]"<<std::flush;
-
-					else if(done_in_mon < 24)
-						std::cout << "\r" << "[" << (int)time<< " Inputs/s]"<< "[total "<<i << "]"<< "[" << percentage << "% done][100% in " << done_in_h << " months]"<<std::flush;
-
-					else
-						std::cout << "\r" << "[" << (int)time<< " Inputs/s]"<< "[total "<<i << "]"<< "[" << percentage << "% done][100% in " << done_in_h << " years]"<<std::flush;
-
-				}
-			}
 		}
-
-	
+		
+		//Pretty printing	
 		std::cout << std::endl;
-
-
 	}
 
 	#endif //PartB
