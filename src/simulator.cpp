@@ -162,13 +162,21 @@ std::vector<std::string> get_edge(std::string line){
 struct VertexData{
 	int component_id;
 	std::string component_name;
+	//Input/Output Edges
 	std::vector<int> inputs; //Edges that are the inputs of said component
 	int output; //Edge that is the output of said component
+	//Component relationship
 	std::vector<int> predecessors; //The ids of the components that are said gate's immediate pred.
 	std::vector<int> successors; //The ids of the components that are said gate's immediate succ.
-	int paths;
-	std::vector<int> input_values;
-	int output_value;
+	int paths; //# of paths leading up to this node
+	//Simulation
+	std::vector<int> input_values; //Boolean 1,0 or 2 = X (for simulation)
+	int output_value;	//Boolean 1,0 or 2 = X (for simulation)
+	//For Stuck at fault modeling
+	std::vector<int> stuck_at_input; //-1 = no fault, 1 = stuck at 1, 0 = suck at 0
+	int stuck_at_output;	//-1 = no fault, 1 = stuck at 1, 0 = suck at 0
+
+
 };
 
 // A utility function to add an edge in a directed graph. 
@@ -184,10 +192,6 @@ void deleteEdge(std::vector<std::vector<int>>& adj, int u, int v){
 		
 		for(auto& entry : adj[u]){
 			if(entry == v){
-				#ifdef VERBOSE
-				std::cout<<"\n";
-				std::cout << "Deleting edge " << u << " -> " << v << std::endl;
-				#endif
 				break;
 			}
 			index++;
@@ -273,16 +277,6 @@ struct VertexData AddToGraph(std::string line, int index, std::vector<std::vecto
 
 	}
 
-		//Verbose
-		#ifdef VERBOSE
-		std::cout << "out: " << temp_vertex.output << std::endl; 
-
-		for(auto& input : temp_vertex.inputs){
-
-			std::cout << "in: " << input << std::endl;
-
-		}
-		#endif
 	return temp_vertex;
 
 }
@@ -341,9 +335,6 @@ int getIndegree(std::vector<std::vector<int>>& adj,int node){
 		}
 	}
 	
-	#ifdef VERBOSE
-//		std::cout << "Node " << node << " has indegree " << counter <<std::endl;
-	#endif
 
 	return counter;
 } 
@@ -518,9 +509,6 @@ int countPaths(std::vector <struct VertexData> Vertices_Vector){
 
 
 
-	#ifdef VERBOSE
-	std::cout << circuit_paths <<std::endl;
-	#endif	
 
 	return circuit_paths;
 
@@ -653,48 +641,46 @@ int evaluateGate(std::vector<int> input_vector,std::string component_name){
 }			
 
 //Evaluate Netlist for a given Input Pattern
-std::vector<int> evaluate(std::vector<std::vector<int>> adj, std::vector <struct VertexData> Vertices_Vector, std::vector<int> Sorted, std::vector<int> input){ 
+std::vector<int> evaluate(std::vector<std::vector<int>> adj, std::vector <struct VertexData> Vertices_Vector, std::vector<int> Sorted, std::vector<int> input, bool faulty, std::pair<int,int> fault){ 
 
 	std::vector<int> output;
 	int i = 0;
 	
-	
-	for(auto& component : Sorted){
-		if(Vertices_Vector[component].component_name == "INPUT"){
-			Vertices_Vector[component].input_values.push_back(input[i]);
-		}
-		i++;
-	}
-
-
-	/*
-	for(auto& gate : Vertices_Vector){
-
-		std::cout << gate.component_name << " - " << gate.component_id << " - output: " << gate.output_value << " - inputs: ";
-		for(auto& in_val : gate.input_values){
-			std::cout << in_val << " ";
-		}
-		std::cout << std::endl;
-	}
-*/
-	
 	//Propagate results
 	for(auto gate : Sorted){
-		
+
+		if(Vertices_Vector[gate].component_name == "INPUT"){
+			Vertices_Vector[gate].input_values.push_back(input[i]);
+		}
+	
 		int gate_output = -1;
 	
 		std::vector<int> input_vector =  Vertices_Vector[gate].input_values;
 
 		std::string gate_type = Vertices_Vector[gate].component_name;
 
-		gate_output = evaluateGate(input_vector,gate_type);
+		//Fault Injection
+		if(faulty){
+		
+			if(fault.first == Vertices_Vector[gate].component_id){
+				gate_output = fault.second;
+			}
+			else{
+			gate_output = evaluateGate(input_vector,gate_type);
+			}
+
+		}
+		//Normal Operation
+		else{
+
+			gate_output = evaluateGate(input_vector,gate_type);
+
+		}
 
 		Vertices_Vector[gate].output_value = gate_output;
 
 		//For each successor add the output value to it's input values	
-		
 		for(auto succ: Vertices_Vector[gate].successors){
-
 			Vertices_Vector[succ].input_values.push_back(gate_output);	
 		}
 
@@ -702,7 +688,11 @@ std::vector<int> evaluate(std::vector<std::vector<int>> adj, std::vector <struct
 		if(Vertices_Vector[gate].component_name == "OUTPUT"){
 			output.push_back(gate_output);
 		}	
+
+		i++;
 	}
+
+
 	return output;
 }
 
@@ -720,7 +710,12 @@ void progressSim(unsigned long long i, unsigned long long N, Timer timer, bool m
 			int percentage = (int)((i+1)*100.0/N);
 			
 			int x = (int)(1000/pattern_time);
-					
+			
+			//Avoid Floating point exception (core dumped)	
+			if(x == 0){
+						x = 1;	
+			}
+
 			//Update every second
 			if((i == 1) || (i % x == 0) || (i == N - 1)){
 				
@@ -765,66 +760,90 @@ void progressSim(unsigned long long i, unsigned long long N, Timer timer, bool m
 }
 
 //Main Simulation Loop for bruteforce
-void doWork1(unsigned long long start, unsigned long long end, int INPUT, std::vector<std::vector<int>> adj, std::vector <struct VertexData> Vertices_Vector, std::vector<int> Sorted, bool updateScreen, unsigned long long n){
+void doWork(unsigned long long start, unsigned long long end, std::vector<std::vector<int>> adj, std::vector <struct VertexData> Vertices_Vector, std::vector<int> Sorted, bool updateScreen, unsigned long long n){
 
 
 		unsigned long long N = end-start;
 
-		/*
+		
 		g_display_mutex.lock();
 			std::thread::id this_id = std::this_thread::get_id();
   		std::cout << "thread " << this_id << " starting with range "<<start<<" - "<<end << " total: "<< N << std::endl;
 		g_display_mutex.unlock();
-		*/
+		
 		//Sleep for 1 second
 		std::this_thread::sleep_for (std::chrono::seconds(1));
-		//std::cout << "No test/input file given. Bruteforcing Circuit.\n";
 
-		//So nothing blows up
-		if(INPUT > 50){
-			std::cout << "Circuit has "<< INPUT<<" inputs. Can't Bruteforce it.\n";
-			return ;
-		}
-
-//		unsigned long N = pow(2,INPUT);
-		
-		//std::cout << "Patterns: " << N << "\n";	
-
-		for(unsigned long i = 0; i < N; i++){
-
-			//Measure time
-			Timer timer;			
-
-			//Declarations
-			std::vector<int> input_vector;
-			std::bitset <64> input_bitset(i);
-	
-			for(int i = 0; i < INPUT; i++){
-				if(input_bitset[i]){
-					input_vector.push_back(1);
-				}
-				else if(!input_bitset[i]){
-					input_vector.push_back(0);
-				}
-			}
-			
-			//Evaluate Netlist
-			std::vector<int> output = evaluate(adj,Vertices_Vector,Sorted,input_vector);
-		
-			if(updateScreen){
-
-				//Pretty Printing
-				g_display_mutex.lock();
-					progressSim(i,N,timer,true,n);
-				g_display_mutex.unlock();
-			}
-		}
 }
 
-//Main Simulation Loop for given inputs
-void doWork2(unsigned long long start, unsigned long long end){
+//Returns the position of the fault to delete
+int deleteFault(std::string Gate_Name,std::vector<struct VertexData> Vertices_Vector ,std::vector<std::pair<int,int>> Faults_Vector, int predecessor, int gate_id){
+
+	int position = 0;
+	int predecessor_id = Vertices_Vector[predecessor].component_id;	
+	int fault = -1;
+	int check_fault = -1;
+
+	if(Gate_Name == "AND" || Gate_Name == "NAND"){
+		//Delete sa-0 from predecessor's outputs
+		fault = 0;
+
+		if(Gate_Name == "AND")
+			check_fault = 0;
+		else if(Gate_Name == "NAND")
+			check_fault = 1;
+
+		//Check if it's sa-0 exists
+	}
+
+	else if(Gate_Name == "OR" || Gate_Name == "NOR"){
+		//Delete sa-1 from predecessor's outputs
+		fault = 1;
+
+		if(Gate_Name == "OR")
+			check_fault = 1;
+		else if(Gate_Name == "NOR")
+			check_fault = 0;
+
+	}
+	else if(Gate_Name == "ORs" || Gate_Name == "NORs" || Gate_Name == "ANDs" || Gate_Name == "NANDs" || Gate_Name == "BUFF" || Gate_Name == "NOTs" || Gate_Name == "NOT"){
+		return -1;
+	}else{
+
+		std::cout << "Unknown gate name: " << Gate_Name << std::endl;
+		fault = -2;
+		return -1;
+	}
+	
 
 
+	std::pair<int,int> to_delete_fault;
+	to_delete_fault.first = predecessor_id;
+	to_delete_fault.second = fault;
+		
+
+	std::pair<int,int> own_fault;
+	own_fault.first = gate_id;
+	own_fault.second = check_fault; 
+
+	bool delete_flag = false;
+
+	if(std::find(Faults_Vector.begin(), Faults_Vector.end(), own_fault) != Faults_Vector.end()){
+		delete_flag = true;
+	}
+	
+		
+	//Find saf for that predecessor
+	for(auto& fault : Faults_Vector){
+
+		if((fault == to_delete_fault) && delete_flag){
+			std::cout << "Gate: "<<Vertices_Vector[to_delete_fault.first].component_name<<to_delete_fault.first << " sa-"<<to_delete_fault.second << std::endl;
+			return position;
+		}
+	position++;
+	}
+	
+ return -1;
 }
 
 //Main Function
@@ -947,7 +966,7 @@ int main(int argc, char *argv[]){
 					if(argc > i+1)					
 						threads = atoi(argv[i+1]);
 					else{
-						std::cout << "Using all available threads\n";
+						//std::cout << "Using all available threads\n";
 					}
 				}
 			}
@@ -1131,10 +1150,6 @@ int main(int argc, char *argv[]){
 				progressBar("Identifying Gates",index,Lines.size());			
 		}
 		
-			//Print Line for debugging									
-			#ifdef VERBOSE
-			std::cout<<line<<std::endl;
-			#endif			
 
 			if(line.substr(0,5) == "INPUT"){
 
@@ -1233,13 +1248,6 @@ int main(int argc, char *argv[]){
 		index++;
 	}
 	
-	//Print Netlist Statistics
-	#ifdef VERBOSE
-	netlist_stats(index,NAND,AND,OR,NOR,NOT,BUFF,INPUT,OUTPUT);
-	
-	//Print Vertices in stdout (std::vector)	
-	printVertexVector(Vertices_Vector);
-	#endif
 
 	index = 0;	
 
@@ -1277,10 +1285,6 @@ int main(int argc, char *argv[]){
 		index++;
 	}
 	
-	#ifdef VERBOSE		
-	//Print Netlist
-	printGraph(adj,Vertices_Vector);
-	#endif
 
 	if(percentage_bar)
 		std::cout << std::endl;
@@ -1319,9 +1323,6 @@ int main(int argc, char *argv[]){
 
 		if(vertex_neighbours.size() > 1){
 		
-			#ifdef VERBOSE
-			std::cout<<"\n Vertex "<< Vertices_Vector[index].component_id << " has "<<vertex_neighbours.size()<<" outputs" <<std::endl;
-			#endif
 
 			for(auto& neighbour : vertex_neighbours){
 
@@ -1338,9 +1339,6 @@ int main(int argc, char *argv[]){
 		index++;
 	}	
 		
-	#ifdef VERBOSE
-	std::cout << "\nSaved Edge Pairs\n";
-	#endif
 
 	//Counter
 	int number = 0;	
@@ -1353,10 +1351,6 @@ int main(int argc, char *argv[]){
 	//Converts Graph from G1 to G2
 	for(auto& saved_pair : saved_edges){
 		
-		#ifdef VERBOSE	
-		std::cout << "\n" << saved_pair.first << " -> " << saved_pair.second << std::endl;
-		#endif
-
 		//Delete edge
 		deleteEdge(adj,saved_pair.first,saved_pair.second);
 
@@ -1368,10 +1362,6 @@ int main(int argc, char *argv[]){
 		stem.inputs.push_back(saved_pair.first);
 		stem.output = saved_pair.second;		
 		
-
-		#ifdef VERBOSE
-		std::cout << stem.component_id << " - " << stem.component_name << std::endl;
-		#endif
 
 		Vertices_Vector.push_back(stem);
 			
@@ -1388,14 +1378,6 @@ int main(int argc, char *argv[]){
 		index++;
 	}
 	
-	#ifdef VERBOSE		
-	//Print Netlist
-	printGraph(adj,Vertices_Vector);
-		
-	//Print Vertices in stdout (std::vector)	
-	printVertexVector(Vertices_Vector);
-	#endif
-
 	#endif //G2
 
 
@@ -1422,6 +1404,7 @@ int main(int argc, char *argv[]){
 
 
 	#ifdef VERBOSE
+
 	//Print Netlist in Topological Order
 	printTopological(Sorted,Vertices_Vector);
 	
@@ -1430,11 +1413,83 @@ int main(int argc, char *argv[]){
 
 	//Print Predecessors
 	printPredecessors(adj,Vertices_Vector);
+
+	netlist_stats(index,NAND,AND,OR,NOR,NOT,BUFF,INPUT,OUTPUT);
+	
+	//Print Vertices in stdout (std::vector)	
+	printVertexVector(Vertices_Vector);
+
+	//Print the whole graph
+	printGraph(adj,Vertices_Vector);
+
+	//Print the whole graph
+	printGraph1(adj);
 	#endif
 
 
 	#ifdef PARTB // Part B starts here
+
+
+	//Find ALL possible stuck at faults in circuit = 2*N, where N is the number of lines (or edges)
 	
+	//Saves all Possible Faults 
+	std::vector<std::pair<int,int>> Faults_Vector;
+
+	int fault_sites = 0;
+	
+	// Detecting all possible fault sites
+	for(auto& node : Vertices_Vector){
+		if(node.component_name != "OUTPUT"){
+			fault_sites++;
+
+			std::pair<int,int> fault;
+			fault.first = node.component_id;
+			fault.second = 0;
+			
+			//sa-0
+			Faults_Vector.push_back(fault);
+
+			fault.second = 1;
+			//sa-1
+			Faults_Vector.push_back(fault);
+
+		}
+	}	
+
+	int max_faults = fault_sites*2;
+	
+	int deleted_faults = 0;
+
+	std::cout << "Max Faults: " << max_faults << std::endl;
+
+	//Checkpoint Theorem
+	bool checkpoint = false; 
+
+	//Equivalence Checking
+	if(checkpoint){
+
+		std::set<std::pair<int,int>>::iterator it;
+
+		for(auto it = Sorted.rbegin(); it != Sorted.rend(); ++it){
+		
+			if(Vertices_Vector[*it].component_name != "OUTPUT" && Vertices_Vector[*it].component_name != "INPUT"){
+				//Delete saf in inputs depending on the component
+
+				for(auto& predecessor : Vertices_Vector[*it].predecessors){
+
+					int delete_position = deleteFault(Vertices_Vector[*it].component_name,Vertices_Vector,Faults_Vector, predecessor, Vertices_Vector[*it].component_id);
+					
+					if(delete_position != -1){
+						Faults_Vector.erase(Faults_Vector.begin()+delete_position);	
+						deleted_faults++;
+					}
+				}	
+			}
+		}
+	}
+
+	//Fault Dominance
+
 	//Preprocess Input File
 	if(test_given){	
 		//File Parsing	
@@ -1460,22 +1515,29 @@ int main(int argc, char *argv[]){
 		}
 	}	
 
-
+	//Faults that Test Vectors are able to detect
+	//First = id of gate's output that is stuck at either 0 or 1	
+	//Second = 1 or 0
+	std::set<std::pair<int,int>> Faults_Set;
+	
 	//Single Threaded Simulation for input file
 	if(test_given){
 
 		unsigned long long N = Tests.size();	
 		unsigned long long i = 0;
+		unsigned long long j = 0;	
 
+		//For each test vector
 		for(auto& pattern : Tests){
-
-			//Measure time
-			Timer timer;			
-
+			
 			//Declarations
 			std::vector<int> input_vector;
 
 
+			//Stuck at fault model
+			std::pair<int,int> empty_fault;
+			
+			//Construct input vector
 			for(int i = 0; i < pattern.size(); i++){
 		
 				if(pattern[i] == '0'){
@@ -1486,15 +1548,33 @@ int main(int argc, char *argv[]){
 				}
 				else if(pattern[i] == '2'){
 					//Don't care
+					std::cout << "Encountered a Don't Care\n";
+					return -1;
 				}
 			}
 
-			//Evaluate Netlist
-			std::vector<int> output = evaluate(adj,Vertices_Vector,Sorted,input_vector);
+			//Evaluate Netlist (non faulty conditions)
+			std::vector<int> correct_output = evaluate(adj,Vertices_Vector,Sorted,input_vector,false,empty_fault);
 			
-			//Pretty Printing
-			progressSim(i,N,timer,false,0);
-			
+			//For each fault check if given test vector is able to detect it
+			for(auto& fault : Faults_Vector){
+
+				//Measure time
+				Timer timer;			
+	
+				std::vector<int> faulty_output = evaluate(adj,Vertices_Vector,Sorted,input_vector,true,fault);
+
+				if(faulty_output != correct_output){
+					Faults_Set.insert(fault);
+				}
+
+				//Pretty Printing
+				progressSim(j,N*Faults_Vector.size(),timer,false,0);
+
+				j++;	
+			}			
+
+						
 			i++;
 		}
 
@@ -1502,9 +1582,13 @@ int main(int argc, char *argv[]){
 	std::cout << std::endl;
 
 	}
+	
+	std::cout << "Faults Detected: " << Faults_Set.size() + deleted_faults<< std::endl;
 
-	//Multithreaded Simulation	
-	if(threads > -2){
+	std::cout << "Fault Coverage: " << (float)(Faults_Set.size()+ deleted_faults)/(max_faults)*100 <<"%"<< std::endl;
+
+	//Multithreaded Simulation for not input file
+	if(threads > -2 && test_given){
 		
 		std::cout << "Parallel Simulation\n";
 
@@ -1521,9 +1605,9 @@ int main(int argc, char *argv[]){
 		unsigned long long start_range = 0;
 		unsigned long long end_range = 0;
 
-		unsigned long long N = pow(2,INPUT);
+		unsigned long long N = Tests.size();
 
-		std::cout << "Patterns: " << N << "\n";	
+		std::cout << "Tests: " << N << "\n";	
 
 		std::vector <std::pair<unsigned long long , unsigned long long>> Range_Vector;
 
@@ -1545,9 +1629,11 @@ int main(int argc, char *argv[]){
 		
 			//Last thread prints to screen
 			if(i == n-1){
-				Thread_Vector.emplace_back(doWork1,Range_Vector[i].first,Range_Vector[i].second,INPUT,adj,Vertices_Vector,Sorted, true, n);
+				Thread_Vector.emplace_back(doWork,Range_Vector[i].first,Range_Vector[i].second, adj, Vertices_Vector, Sorted, true, n);
+
 			}else{
-				Thread_Vector.emplace_back(doWork1,Range_Vector[i].first,Range_Vector[i].second,INPUT,adj,Vertices_Vector,Sorted, false, n);
+				Thread_Vector.emplace_back(doWork,Range_Vector[i].first,Range_Vector[i].second, adj, Vertices_Vector, Sorted, false, n);
+
 			}
 		}
 		
@@ -1561,54 +1647,8 @@ int main(int argc, char *argv[]){
 
 	}
 	//Single Threaded Simulation
+
 	
-	//If input/test file is not given
-	if(!test_given){
-
-		std::cout << "Serial Simulation\n";
-
-		//std::cout << "No test/input file given. Bruteforcing Circuit.\n";
-
-		//So nothing blows up
-		if(INPUT > 50){
-			std::cout << "Circuit has "<< INPUT<<" inputs. Can't Bruteforce it.\n";
-			return -1;
-		}
-
-		unsigned long N = pow(2,INPUT);
-		
-		std::cout << "Patterns: " << N << "\n";	
-
-		for(unsigned long i = 0; i < N; i++){
-
-			//Measure time
-			Timer timer;			
-
-			//Declarations
-			std::vector<int> input_vector;
-			std::bitset <64> input_bitset(i);
-	
-			for(int i = 0; i < INPUT; i++){
-				if(input_bitset[i]){
-					input_vector.push_back(1);
-				}
-				else if(!input_bitset[i]){
-					input_vector.push_back(0);
-				}
-			}
-			
-			//Evaluate Netlist
-			std::vector<int> output = evaluate(adj,Vertices_Vector,Sorted,input_vector);
-			
-			//Pretty Printing
-			progressSim(i,N,timer,false,0);
-
-		}
-		
-		//Pretty printing	
-		std::cout << std::endl;
-	}
-
 	#endif //PartB
 
 	//End time
