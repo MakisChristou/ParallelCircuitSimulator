@@ -1,0 +1,20 @@
+#####################################################
+#             FULLSCAN VERSION - ISCAS 89           #
+#          Converted by Saravanan Padmanaban        #
+#             Southern Illinois University          #
+#                 Carbondale, IL 62901              #
+#####################################################
+INPUT(1)
+INPUT(2)
+INPUT(3)
+INPUT(4)
+
+OUTPUT(10)
+
+5 = AND(1,2)
+6 = AND(2,3)
+7 = AND(3,4)
+10 = AND(8,9)
+8 = OR(5,6)
+9 = OR(6,7)
+

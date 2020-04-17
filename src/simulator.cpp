@@ -776,75 +776,41 @@ void doWork(unsigned long long start, unsigned long long end, std::vector<std::v
 
 }
 
-//Returns the position of the fault to delete
-int deleteFault(std::string Gate_Name,std::vector<struct VertexData> Vertices_Vector ,std::vector<std::pair<int,int>> Faults_Vector, int predecessor, int gate_id){
+//Helper print function
+std::string printVector(std::vector<int> input_vector){	
+		std::string out = "";
+		for(auto& i : input_vector)
+				out = out + std::to_string(i);	
 
-	int position = 0;
-	int predecessor_id = Vertices_Vector[predecessor].component_id;	
-	int fault = -1;
-	int check_fault = -1;
-
-	if(Gate_Name == "AND" || Gate_Name == "NAND"){
-		//Delete sa-0 from predecessor's outputs
-		fault = 0;
-
-		if(Gate_Name == "AND")
-			check_fault = 0;
-		else if(Gate_Name == "NAND")
-			check_fault = 1;
-
-		//Check if it's sa-0 exists
-	}
-
-	else if(Gate_Name == "OR" || Gate_Name == "NOR"){
-		//Delete sa-1 from predecessor's outputs
-		fault = 1;
-
-		if(Gate_Name == "OR")
-			check_fault = 1;
-		else if(Gate_Name == "NOR")
-			check_fault = 0;
-
-	}
-	else if(Gate_Name == "ORs" || Gate_Name == "NORs" || Gate_Name == "ANDs" || Gate_Name == "NANDs" || Gate_Name == "BUFF" || Gate_Name == "NOTs" || Gate_Name == "NOT"){
-		return -1;
-	}else{
-
-		std::cout << "Unknown gate name: " << Gate_Name << std::endl;
-		fault = -2;
-		return -1;
-	}
-	
-
-
-	std::pair<int,int> to_delete_fault;
-	to_delete_fault.first = predecessor_id;
-	to_delete_fault.second = fault;
-		
-
-	std::pair<int,int> own_fault;
-	own_fault.first = gate_id;
-	own_fault.second = check_fault; 
-
-	bool delete_flag = false;
-
-	if(std::find(Faults_Vector.begin(), Faults_Vector.end(), own_fault) != Faults_Vector.end()){
-		delete_flag = true;
-	}
-	
-		
-	//Find saf for that predecessor
-	for(auto& fault : Faults_Vector){
-
-		if((fault == to_delete_fault) && delete_flag){
-			std::cout << "Gate: "<<Vertices_Vector[to_delete_fault.first].component_name<<to_delete_fault.first << " sa-"<<to_delete_fault.second << std::endl;
-			return position;
-		}
-	position++;
-	}
-	
- return -1;
+		return out;
 }
+
+//Helper print function
+void	printFaultStats(bool checkpoint,int checkpoint_faults,int skipped_faults, std::set<std::pair<int,int>> Faults_Set,int max_faults, std::vector<std::pair<int,int>> Faults_Vector){
+	
+	std::cout << "\n---- Fault Stats ----\n";
+	//Print Fault Coverage Stats
+	if(checkpoint){
+		std::cout << "All Faults: " << checkpoint_faults + skipped_faults  << std::endl;
+		std::cout << "Fault Coverage: " << (float)(Faults_Set.size()+ skipped_faults)/(max_faults)*100 <<"%"<< std::endl;
+		std::cout << "Non-Skipped Faults: " << checkpoint_faults << std::endl;
+		std::cout << "Skipped Faults: " << skipped_faults << std::endl;
+		std::cout << "Detected Faults: " << Faults_Set.size() + skipped_faults << std::endl;
+	}
+	else{
+		std::cout << "All Faults: " << max_faults << std::endl;
+		std::cout << "Fault Coverage: " << (float)(Faults_Set.size())/(max_faults)*100 <<"%"<< std::endl;
+		std::cout << "Non-Skipped Faults: " << max_faults << std::endl;
+		std::cout << "Skipped Faults: " << skipped_faults << std::endl; 
+		std::cout << "Detected Faults: " << Faults_Set.size() << std::endl;
+	}
+
+		std::cout << "Undetected Faults: " << Faults_Vector.size() <<std::endl; 
+
+		std::cout << "---------------------\n";
+
+}
+
 
 //Main Function
 int main(int argc, char *argv[]){
@@ -1027,14 +993,13 @@ int main(int argc, char *argv[]){
 
 	//If input vector file not given
 	if(!test_given){
-		//std::cout << "No test/input file given. Simulating for 2^N patterns\n";
-		//print_usage();
-		//return -1;
+		std::cout << "No test/input file given.\n";
+		print_usage();
+		return -1;
 	}
 
 	//If input vector file is given
 	else{
-	
 		//Parse input/test file
   	if (!input_file) {
     	std::cout << "Error Opening Vector File" << std::endl;
@@ -1044,12 +1009,11 @@ int main(int argc, char *argv[]){
   	else{
     	while(std::getline(input_file, current_line)){
       	Tests.push_back(current_line);
-    	}
+			}
   	}
 
 		// Four types of input file
 		// .txt .vec .comp.10 .benchtest.in
-		
 		
 		//Check if input file is one of the 4 types		
 		if(input_path.substr(input_path.length() - 4) == ".txt" ){
@@ -1429,67 +1393,7 @@ int main(int argc, char *argv[]){
 
 	#ifdef PARTB // Part B starts here
 
-
-	//Find ALL possible stuck at faults in circuit = 2*N, where N is the number of lines (or edges)
 	
-	//Saves all Possible Faults 
-	std::vector<std::pair<int,int>> Faults_Vector;
-
-	int fault_sites = 0;
-	
-	// Detecting all possible fault sites
-	for(auto& node : Vertices_Vector){
-		if(node.component_name != "OUTPUT"){
-			fault_sites++;
-
-			std::pair<int,int> fault;
-			fault.first = node.component_id;
-			fault.second = 0;
-			
-			//sa-0
-			Faults_Vector.push_back(fault);
-
-			fault.second = 1;
-			//sa-1
-			Faults_Vector.push_back(fault);
-
-		}
-	}	
-
-	int max_faults = fault_sites*2;
-	
-	int deleted_faults = 0;
-
-	std::cout << "Max Faults: " << max_faults << std::endl;
-
-	//Checkpoint Theorem
-	bool checkpoint = false; 
-
-	//Equivalence Checking
-	if(checkpoint){
-
-		std::set<std::pair<int,int>>::iterator it;
-
-		for(auto it = Sorted.rbegin(); it != Sorted.rend(); ++it){
-		
-			if(Vertices_Vector[*it].component_name != "OUTPUT" && Vertices_Vector[*it].component_name != "INPUT"){
-				//Delete saf in inputs depending on the component
-
-				for(auto& predecessor : Vertices_Vector[*it].predecessors){
-
-					int delete_position = deleteFault(Vertices_Vector[*it].component_name,Vertices_Vector,Faults_Vector, predecessor, Vertices_Vector[*it].component_id);
-					
-					if(delete_position != -1){
-						Faults_Vector.erase(Faults_Vector.begin()+delete_position);	
-						deleted_faults++;
-					}
-				}	
-			}
-		}
-	}
-
-	//Fault Dominance
-
 	//Preprocess Input File
 	if(test_given){	
 		//File Parsing	
@@ -1513,13 +1417,89 @@ int main(int argc, char *argv[]){
 		else if(file_type == 3){
 
 		}
+	}
+
+	//Find ALL possible stuck at faults in circuit = 2*N, where N is the number of lines (or edges)
+	
+	//Saves all Possible Faults 
+	std::vector<std::pair<int,int>> Faults_Vector;
+
+	int fault_sites = 0;
+	
+	// Detecting all possible fault sites
+	for(auto& node : Vertices_Vector){
+		
+			if(node.component_name != "OUTPUT"){
+				fault_sites++;
+			
+				std::pair<int,int> fault;
+				fault.first = node.component_id;
+				fault.second = 0;
+			
+				//sa-0
+				Faults_Vector.push_back(fault);
+
+				fault.second = 1;
+				//sa-1
+				Faults_Vector.push_back(fault);
+		}
 	}	
+
+	
+	int max_faults = fault_sites * 2;
+	
+	int checkpoint_fault_sites = 0;	
+
+	int skipped_fault_sites = 0;
+
+	//Checkpoint Theorem
+	bool checkpoint = false; 
+	
+	if(checkpoint){
+		
+		//Restart Vector
+		Faults_Vector.erase(Faults_Vector.begin(),Faults_Vector.end());
+
+		// Detecting checkpoint fault sites
+		for(auto& node : Vertices_Vector){
+			
+			std::size_t found = node.component_name.find("s");
+
+			if((node.component_name == "INPUT") || (found!=std::string::npos)){
+				
+				checkpoint_fault_sites++;
+
+//				std::cout << node.component_name << "-"<<node.component_id << " sa-0\n";
+//				std::cout << node.component_name << "-"<<node.component_id << " sa-1\n";
+
+				std::pair<int,int> fault;
+				fault.first = node.component_id;
+				fault.second = 0;
+			
+				//sa-0
+				Faults_Vector.push_back(fault);
+
+				fault.second = 1;
+				//sa-1
+				Faults_Vector.push_back(fault);
+
+		}else if(node.component_name != "OUTPUT"){
+				skipped_fault_sites++;
+			}
+	}	
+	
+
+	} //Done with checkpoint theorem
+
+	int checkpoint_faults = checkpoint_fault_sites * 2;
+
+	int skipped_faults = skipped_fault_sites * 2;
 
 	//Faults that Test Vectors are able to detect
 	//First = id of gate's output that is stuck at either 0 or 1	
 	//Second = 1 or 0
 	std::set<std::pair<int,int>> Faults_Set;
-	
+
 	//Single Threaded Simulation for input file
 	if(test_given){
 
@@ -1527,12 +1507,13 @@ int main(int argc, char *argv[]){
 		unsigned long long i = 0;
 		unsigned long long j = 0;	
 
+		std::cout << "Max Patterns: " << N * Faults_Vector.size() << std::endl;
+
 		//For each test vector
 		for(auto& pattern : Tests){
 			
 			//Declarations
 			std::vector<int> input_vector;
-
 
 			//Stuck at fault model
 			std::pair<int,int> empty_fault;
@@ -1552,29 +1533,43 @@ int main(int argc, char *argv[]){
 					return -1;
 				}
 			}
-
+			
 			//Evaluate Netlist (non faulty conditions)
 			std::vector<int> correct_output = evaluate(adj,Vertices_Vector,Sorted,input_vector,false,empty_fault);
-			
-			//For each fault check if given test vector is able to detect it
-			for(auto& fault : Faults_Vector){
+		
+			//For each Fault	
+			for (std::vector<std::pair<int,int>>::iterator it = Faults_Vector.begin() ; it != Faults_Vector.end();){
 
 				//Measure time
 				Timer timer;			
 	
-				std::vector<int> faulty_output = evaluate(adj,Vertices_Vector,Sorted,input_vector,true,fault);
+				std::vector<int> faulty_output = evaluate(adj,Vertices_Vector,Sorted,input_vector,true,*it);				
 
 				if(faulty_output != correct_output){
-					Faults_Set.insert(fault);
-				}
 
-				//Pretty Printing
-				progressSim(j,N*Faults_Vector.size(),timer,false,0);
+					#ifdef DEBUG
+					std::cout << "I CAN DETECT BUG WITH Input:" << printVector(input_vector) << " "; 
+					std::cout << "Correct Output:" << printVector(correct_output) << " ";
+					std::cout << "Faulty Output: "  <<Vertices_Vector[(*it).first].component_name << "-"<<(*it).first << " sa-" <<(*it).second <<": " << printVector(faulty_output) << std::endl;
+					#endif
+
+					Faults_Set.insert(*it);
+					it = Faults_Vector.erase(it);
+
+				}else{
+					++it;
+				}
+	
+				// For progress bar	
+				int F = j + ((N-i) * Faults_Vector.size()); 
+				F = N * max_faults;
+				//Pretty Printing (inaccurate)
+				progressSim(j,F,timer,false,0);
 
 				j++;	
-			}			
 
-						
+			}
+
 			i++;
 		}
 
@@ -1582,11 +1577,10 @@ int main(int argc, char *argv[]){
 	std::cout << std::endl;
 
 	}
-	
-	std::cout << "Faults Detected: " << Faults_Set.size() + deleted_faults<< std::endl;
-
-	std::cout << "Fault Coverage: " << (float)(Faults_Set.size()+ deleted_faults)/(max_faults)*100 <<"%"<< std::endl;
-
+		
+	//Print Fault stats 
+	printFaultStats(checkpoint,checkpoint_faults,skipped_faults,Faults_Set,max_faults,Faults_Vector);
+		
 	//Multithreaded Simulation for not input file
 	if(threads > -2 && test_given){
 		
