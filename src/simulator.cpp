@@ -16,6 +16,7 @@
 #include <queue>
 #include <thread>
 #include <mutex>
+#include <iomanip>
 
 //For printing thread info
 std::mutex g_display_mutex;
@@ -785,38 +786,18 @@ std::string printVector(std::vector<int> input_vector){
 }
 
 //Helper print function
-void printFaultStats(bool checkpoint,int checkpoint_faults,int skipped_faults, std::set<std::pair<int,int>> Faults_Set,int max_faults, std::vector<std::pair<int,int>> Faults_Vector){
+void printFaultStats(int circuit_faults, int faults_set_size){
 	
 	std::cout << "\n---- Fault Stats ----\n";
-	//Print Fault Coverage Stats
-	if(checkpoint){
-		std::cout << "All Faults: " << checkpoint_faults + skipped_faults  << std::endl;
-		std::cout << "Fault Coverage: " << (float)(Faults_Set.size()+ skipped_faults)/(max_faults)*100 <<"%"<< std::endl;
-		std::cout << "Non-Skipped Faults: " << checkpoint_faults << std::endl;
-		std::cout << "Skipped Faults: " << skipped_faults << std::endl;
-		std::cout << "Detected Faults: " << Faults_Set.size() + skipped_faults << std::endl;
-	}
-	else{
-		std::cout << "All Faults: " << max_faults << std::endl;
-		std::cout << "Fault Coverage: " << (float)(Faults_Set.size())/(max_faults)*100 <<"%"<< std::endl;
-		std::cout << "Non-Skipped Faults: " << max_faults << std::endl;
-		std::cout << "Skipped Faults: " << skipped_faults << std::endl; 
-		std::cout << "Detected Faults: " << Faults_Set.size() << std::endl;
-	}
-
-		std::cout << "Undetected Faults: " << Faults_Vector.size() <<std::endl; 
-
-		std::cout << "---------------------\n";
+	std::cout << "Fault Coverage: " << (float)(faults_set_size)/(circuit_faults)*100 <<"%"<< std::endl;
+	std::cout << "---------------------\n";
 
 }
 
 //Helper Function, return coverage percentage
-float getFaultCoverage(bool checkpoint, int faults_set_size, int max_faults, int skipped_faults){
+float getFaultCoverage(int circuit_faults,int faults_set_size){
 
-	if(checkpoint){
-		return (float)(faults_set_size + skipped_faults)/(max_faults)*100; 
-	}
-		return (float)(faults_set_size )/(max_faults)*100; 
+		return (float)(faults_set_size)/(circuit_faults)*100; 
 }
 
 //Main Function
@@ -1460,7 +1441,9 @@ int main(int argc, char *argv[]){
 
 	//Checkpoint Theorem
 	bool checkpoint = true; 
-	
+
+	bool fault_dropping = true;
+
 	if(checkpoint){
 		
 		//Restart Vector
@@ -1474,9 +1457,6 @@ int main(int argc, char *argv[]){
 			if((node.component_name == "INPUT") || (found!=std::string::npos)){
 				
 				checkpoint_fault_sites++;
-
-//				std::cout << node.component_name << "-"<<node.component_id << " sa-0\n";
-//				std::cout << node.component_name << "-"<<node.component_id << " sa-1\n";
 
 				std::pair<int,int> fault;
 				fault.first = node.component_id;
@@ -1497,9 +1477,8 @@ int main(int argc, char *argv[]){
 
 	} //Done with checkpoint theorem
 
-	int checkpoint_faults = checkpoint_fault_sites * 2;
 
-	int skipped_faults = skipped_fault_sites * 2;
+	int circuit_faults = checkpoint_fault_sites * 2;
 
 	//Faults that Test Vectors are able to detect
 	//First = id of gate's output that is stuck at either 0 or 1	
@@ -1563,7 +1542,12 @@ int main(int argc, char *argv[]){
 					#endif
 
 					Faults_Set.insert(*it);
-					it = Faults_Vector.erase(it);
+
+					if(fault_dropping){
+												it = Faults_Vector.erase(it);
+					}else{
+						++it;
+					}
 
 				}else{
 					++it;
@@ -1571,11 +1555,7 @@ int main(int argc, char *argv[]){
 				
 				if(percentage_bar){	
 					// For progress bar	
-					int F = j + ((N-i) * Faults_Vector.size()); 
-					if(checkpoint)
-						F = N * checkpoint_faults ;
-					else
-						F = N * max_faults;
+					int F = N * circuit_faults;
 
 					//Pretty Printing (inaccurate)
 					progressSim(j,F,timer,false,0);
@@ -1594,7 +1574,7 @@ int main(int argc, char *argv[]){
 	#endif
 
 	//Print Fault stats 
-	//printFaultStats(checkpoint,checkpoint_faults,skipped_faults,Faults_Set,max_faults,Faults_Vector);
+	//printFaultStats(circuit_faults,Faults_Set.size());
 		
 	//Multithreaded Simulation for not input file
 	if(threads > -2 && test_given){
@@ -1679,9 +1659,14 @@ int main(int argc, char *argv[]){
 
 		//Calculate Graph Size 
 		int bytes = getGraphSize(adj,Vertices_Vector);
-		float fault_coverage = getFaultCoverage(checkpoint,Faults_Set.size(),max_faults,skipped_faults);
+		float fault_coverage = getFaultCoverage(circuit_faults, Faults_Set.size());
 
-		stats = " LINES:"+std::to_string(index)+" NAND:"+std::to_string(NAND)+" AND:"+std::to_string(AND)+" OR:"+std::to_string(OR)+" NOR:"+std::to_string(NOR)+" NOT:"+std::to_string(NOT)+" BUFF:"+std::to_string(BUFF)+" INPUT:"+std::to_string(INPUT)+" OUTPUT:"+std::to_string(OUTPUT)+" KB:"+std::to_string(bytes/1024)+" PATHS:"+std::to_string(PATHS)+" COVERAGE:"+std::to_string(fault_coverage);
+		std::stringstream stream;
+		stream << std::fixed << std::setprecision(2) << fault_coverage;
+		std::string s = stream.str();
+
+
+		stats = " LINES:"+std::to_string(index)+" NAND:"+std::to_string(NAND)+" AND:"+std::to_string(AND)+" OR:"+std::to_string(OR)+" NOR:"+std::to_string(NOR)+" NOT:"+std::to_string(NOT)+" BUFF:"+std::to_string(BUFF)+" INPUT:"+std::to_string(INPUT)+" OUTPUT:"+std::to_string(OUTPUT)+" KB:"+std::to_string(bytes/1024)+" PATHS:"+std::to_string(PATHS)+" COVERAGE:"+s+"%";
 	}
 
 	//Print to Graphviz file
