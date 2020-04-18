@@ -358,8 +358,7 @@ void printGraph1(std::vector<std::vector<int>>& adj){
 }
 
 //Progress Bar function
-void progressBar(std::string message, unsigned long x, unsigned long y){
-	
+void progressBar(std::string message, unsigned long x, unsigned long y){	
 	int percentage = (int)((x+1)*100.0/y);	
 	std::cout << "\r"<< "["<<message<<"]["<<percentage<<"%]"<<std::flush;
 
@@ -786,7 +785,7 @@ std::string printVector(std::vector<int> input_vector){
 }
 
 //Helper print function
-void	printFaultStats(bool checkpoint,int checkpoint_faults,int skipped_faults, std::set<std::pair<int,int>> Faults_Set,int max_faults, std::vector<std::pair<int,int>> Faults_Vector){
+void printFaultStats(bool checkpoint,int checkpoint_faults,int skipped_faults, std::set<std::pair<int,int>> Faults_Set,int max_faults, std::vector<std::pair<int,int>> Faults_Vector){
 	
 	std::cout << "\n---- Fault Stats ----\n";
 	//Print Fault Coverage Stats
@@ -811,6 +810,14 @@ void	printFaultStats(bool checkpoint,int checkpoint_faults,int skipped_faults, s
 
 }
 
+//Helper Function, return coverage percentage
+float getFaultCoverage(bool checkpoint, int faults_set_size, int max_faults, int skipped_faults){
+
+	if(checkpoint){
+		return (float)(faults_set_size + skipped_faults)/(max_faults)*100; 
+	}
+		return (float)(faults_set_size )/(max_faults)*100; 
+}
 
 //Main Function
 int main(int argc, char *argv[]){
@@ -1444,7 +1451,6 @@ int main(int argc, char *argv[]){
 				Faults_Vector.push_back(fault);
 		}
 	}	
-
 	
 	int max_faults = fault_sites * 2;
 	
@@ -1453,7 +1459,7 @@ int main(int argc, char *argv[]){
 	int skipped_fault_sites = 0;
 
 	//Checkpoint Theorem
-	bool checkpoint = false; 
+	bool checkpoint = true; 
 	
 	if(checkpoint){
 		
@@ -1499,15 +1505,18 @@ int main(int argc, char *argv[]){
 	//First = id of gate's output that is stuck at either 0 or 1	
 	//Second = 1 or 0
 	std::set<std::pair<int,int>> Faults_Set;
-
+	
+	#define SINGLE
+	#ifdef SINGLE
 	//Single Threaded Simulation for input file
 	if(test_given){
 
 		unsigned long long N = Tests.size();	
 		unsigned long long i = 0;
 		unsigned long long j = 0;	
-
-		std::cout << "Max Patterns: " << N * Faults_Vector.size() << std::endl;
+		
+		if(percentage_bar)
+			std::cout << "Max Patterns: " << N * Faults_Vector.size() << std::endl;
 
 		//For each test vector
 		for(auto& pattern : Tests){
@@ -1543,7 +1552,7 @@ int main(int argc, char *argv[]){
 				//Measure time
 				Timer timer;			
 	
-				std::vector<int> faulty_output = evaluate(adj,Vertices_Vector,Sorted,input_vector,true,*it);				
+				std::vector<int> faulty_output = evaluate(adj,Vertices_Vector,Sorted,input_vector,true,*it);			
 
 				if(faulty_output != correct_output){
 
@@ -1559,13 +1568,18 @@ int main(int argc, char *argv[]){
 				}else{
 					++it;
 				}
-	
-				// For progress bar	
-				int F = j + ((N-i) * Faults_Vector.size()); 
-				F = N * max_faults;
-				//Pretty Printing (inaccurate)
-				progressSim(j,F,timer,false,0);
+				
+				if(percentage_bar){	
+					// For progress bar	
+					int F = j + ((N-i) * Faults_Vector.size()); 
+					if(checkpoint)
+						F = N * checkpoint_faults ;
+					else
+						F = N * max_faults;
 
+					//Pretty Printing (inaccurate)
+					progressSim(j,F,timer,false,0);
+				}
 				j++;	
 
 			}
@@ -1577,9 +1591,10 @@ int main(int argc, char *argv[]){
 	std::cout << std::endl;
 
 	}
-		
+	#endif
+
 	//Print Fault stats 
-	printFaultStats(checkpoint,checkpoint_faults,skipped_faults,Faults_Set,max_faults,Faults_Vector);
+	//printFaultStats(checkpoint,checkpoint_faults,skipped_faults,Faults_Set,max_faults,Faults_Vector);
 		
 	//Multithreaded Simulation for not input file
 	if(threads > -2 && test_given){
@@ -1607,7 +1622,15 @@ int main(int argc, char *argv[]){
 
 		//Split work equally for N threads
 		for(int i = 1; i<(n+1); i++){
-			end_range = start_range+(N/n)-1;
+			
+			if(i == n){
+				end_range = N-1;
+			}
+			
+			else{
+				end_range = start_range+(N/n)-1;
+			}
+
 			std::pair<unsigned long long,unsigned long long> temp_pair;
 			temp_pair.first = start_range;
 			temp_pair.second = end_range;
@@ -1619,13 +1642,14 @@ int main(int argc, char *argv[]){
 		std::vector <std::thread> Thread_Vector;
 	
 		//Start n threads
-		for(unsigned long long i = 0; i < n; i++){
-		
-			//Last thread prints to screen
+		for(unsigned long long i = 0; i < n; i++){		
+			//Special thread ;)
 			if(i == n-1){
 				Thread_Vector.emplace_back(doWork,Range_Vector[i].first,Range_Vector[i].second, adj, Vertices_Vector, Sorted, true, n);
 
-			}else{
+			}
+			
+			else{
 				Thread_Vector.emplace_back(doWork,Range_Vector[i].first,Range_Vector[i].second, adj, Vertices_Vector, Sorted, false, n);
 
 			}
@@ -1641,7 +1665,6 @@ int main(int argc, char *argv[]){
 
 	}
 	//Single Threaded Simulation
-
 	
 	#endif //PartB
 
@@ -1656,8 +1679,9 @@ int main(int argc, char *argv[]){
 
 		//Calculate Graph Size 
 		int bytes = getGraphSize(adj,Vertices_Vector);
+		float fault_coverage = getFaultCoverage(checkpoint,Faults_Set.size(),max_faults,skipped_faults);
 
-		stats = " LINES:"+std::to_string(index)+" NAND:"+std::to_string(NAND)+" AND:"+std::to_string(AND)+" OR:"+std::to_string(OR)+" NOR:"+std::to_string(NOR)+" NOT:"+std::to_string(NOT)+" BUFF:"+std::to_string(BUFF)+" INPUT:"+std::to_string(INPUT)+" OUTPUT:"+std::to_string(OUTPUT)+" KB:"+std::to_string(bytes/1024)+" PATHS:"+std::to_string(PATHS);
+		stats = " LINES:"+std::to_string(index)+" NAND:"+std::to_string(NAND)+" AND:"+std::to_string(AND)+" OR:"+std::to_string(OR)+" NOR:"+std::to_string(NOR)+" NOT:"+std::to_string(NOT)+" BUFF:"+std::to_string(BUFF)+" INPUT:"+std::to_string(INPUT)+" OUTPUT:"+std::to_string(OUTPUT)+" KB:"+std::to_string(bytes/1024)+" PATHS:"+std::to_string(PATHS)+" COVERAGE:"+std::to_string(fault_coverage);
 	}
 
 	//Print to Graphviz file
