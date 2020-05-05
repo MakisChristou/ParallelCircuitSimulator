@@ -777,12 +777,13 @@ void doWork(unsigned long long start, unsigned long long end, std::vector<std::v
 			std::thread::id this_id = std::this_thread::get_id();
   		std::cout << "thread " << this_id << " starting with range "<<start<<" - "<<end << " total: "<< N << std::endl;
 		g_display_mutex.unlock();
-		
-		//Sleep for 1 second
-		std::this_thread::sleep_for (std::chrono::seconds(1));
 
+		//Copy All faults to a local variable
 		std::vector<std::pair<int,int>> Local_Faults_Vector = Global_Faults_Vector;
 
+		//Sleep for 1 second
+		std::this_thread::sleep_for (std::chrono::seconds(1));
+	
 		//For each test vector
 		for(unsigned long long k = start; k <= end; k++){
 			
@@ -823,53 +824,49 @@ void doWork(unsigned long long start, unsigned long long end, std::vector<std::v
 			for (std::vector<std::pair<int,int>>::iterator it = Local_Faults_Vector.begin() ; it != Local_Faults_Vector.end();){
 
 
-
-				//If local fault is not a global fault (i.e. some other thread detected it)
-				if(std::find(Global_Faults_Vector.begin(), Global_Faults_Vector.end(), *it) == Global_Faults_Vector.end()){
-					
-				}
-
-				//Measure time
-				Timer timer;			
+				//If fault not in global vector skip it
+				if(true)
+				{
+					//Measure time
+					Timer timer;			
 	
-				std::vector<int> faulty_output = evaluate(adj,Vertices_Vector,Sorted,input_vector,true,*it);			
+					std::vector<int> faulty_output = evaluate(adj,Vertices_Vector,Sorted,input_vector,true,*it);			
 
-				if(faulty_output != correct_output){
+					if(faulty_output != correct_output){
+						#ifdef DEBUG
+							std::cout << "I CAN DETECT BUG WITH Input:" << printVector(input_vector) << " "; 
+							std::cout << "Correct Output:" << printVector(correct_output) << " ";
+							std::cout << "Faulty Output: "  <<Vertices_Vector[(*it).first].component_name << "-"<<(*it).first << " sa-" <<(*it).second <<": " << printVector(faulty_output) << std::endl;
+						#endif
 
-					#ifdef DEBUG
-						std::cout << "I CAN DETECT BUG WITH Input:" << printVector(input_vector) << " "; 
-						std::cout << "Correct Output:" << printVector(correct_output) << " ";
-						std::cout << "Faulty Output: "  <<Vertices_Vector[(*it).first].component_name << "-"<<(*it).first << " sa-" <<(*it).second <<": " << printVector(faulty_output) << std::endl;
-					#endif
 
-
-					g_fault_mutex.lock();
-						Global_Faults_Set.insert(*it);
-					g_fault_mutex.unlock();
-
-					if(fault_dropping){
 						g_fault_mutex.lock();
-							it = Global_Faults_Vector.erase(it);
+							Global_Faults_Set.insert(*it);
 						g_fault_mutex.unlock();
+
+						if(fault_dropping){
+							g_fault_mutex.lock();
+								it = Global_Faults_Vector.erase(it);
+							g_fault_mutex.unlock();
+						}else{
+							++it;
+						}
 					}else{
 						++it;
 					}
-
-				}else{
-					++it;
-				}
 				
-				if(updateScreen){	
-					// For progress bar	
-					int F = end-start;
-					std::cout << "Itteration  "<< (*it).first << " - " << (*it).second << "\n";
-					//Pretty Printing (inaccurate)
-					progressSim(j,F,timer,true,n);
-				}
-				j++;	
-
+					if(updateScreen){	
+						// For progress bar	
+						int F = (end-start)*Local_Faults_Vector.size();
+//					std::cout << "Itteration  "<< (*it).first << " - " << (*it).second << "\n";
+						//Pretty Printing (inaccurate)
+						progressSim(j,F,timer,true,n);
+					}
+					j++;	
 			}
 
+			}
+			
 			i++;
 		}
 
@@ -1588,7 +1585,7 @@ int main(int argc, char *argv[]){
 	//Second = 1 or 0
 	std::set<std::pair<int,int>> Faults_Set;
 	
-	#define SINGLE
+	//#define SINGLE
 	#ifdef SINGLE
 	//Single Threaded Simulation for input file
 	if(test_given){
