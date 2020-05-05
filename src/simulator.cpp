@@ -24,6 +24,10 @@ std::mutex g_display_mutex;
 //For saving thread results
 std::mutex g_fault_mutex;
 
+//For saving thread results
+std::mutex g_set_mutex;
+
+
 //Vector with Results (Single Threaded)
 std::vector <std::pair<std::vector<int>,std::vector<int>>> Response_Vector_Single;
 
@@ -53,7 +57,7 @@ int threads = -2;
 //For Parallel Simulation
 std::set<std::pair<int,int>> Global_Faults_Set;
 std::vector<std::pair<int,int>> Global_Faults_Vector;
-
+std::vector<int> Skipped_Faults_Vector;
 
 //Timer Class for performance evaluation
 class Timer{
@@ -739,23 +743,25 @@ void progressSim(unsigned long long i, unsigned long long N, Timer timer, bool m
 					}
 
 
+					std::string padding = "                   ";
+
 					if(done_in_s < 180)
-						std::cout << "\r" << "[" << (unsigned long long)time<< " P/s]"<< "[total "<<i << "]"<< "[" << percentage << "% done][100% in " << done_in_s << " sec]"<<std::flush;
+						std::cout << "\r" << "[" << (unsigned long long)time<< " P/s]"<< "[total "<<i << "]"<< "[" << percentage << "% done][100% in " << done_in_s << " sec]"<< padding <<std::flush;
 
 					else if(done_in_m < 180)
-						std::cout << "\r" << "[" << (unsigned long long)time<< " P/s]"<< "[total "<<i << "]"<< "[" << percentage << "% done][100% in " << done_in_m << " min]"<<std::flush;
+						std::cout << "\r" << "[" << (unsigned long long)time<< " P/s]"<< "[total "<<i << "]"<< "[" << percentage << "% done][100% in " << done_in_m << " min]"<< padding <<std::flush;
 
 					else if(done_in_h < 48)
-						std::cout << "\r" << "[" << (unsigned long long)time<< " P/s]"<< "[total "<<i << "]"<< "[" << percentage << "% done][100% in " << done_in_h << " hours]"<<std::flush;
+						std::cout << "\r" << "[" << (unsigned long long)time<< " P/s]"<< "[total "<<i << "]"<< "[" << percentage << "% done][100% in " << done_in_h << " hours]"<< padding <<std::flush;
 
 					else if(done_in_d < 90)
-						std::cout << "\r" << "[" << (unsigned long long)time<< " P/s]"<< "[total "<<i << "]"<< "[" << percentage << "% done][100% in " << done_in_d << " days]"<<std::flush;
+						std::cout << "\r" << "[" << (unsigned long long)time<< " P/s]"<< "[total "<<i << "]"<< "[" << percentage << "% done][100% in " << done_in_d << " days]"<< padding <<std::flush;
 
 					else if(done_in_mon < 24)
-						std::cout << "\r" << "[" << (unsigned long long)time<< " P/s]"<< "[total "<<i << "]"<< "[" << percentage << "% done][100% in " << done_in_mon << " months]"<<std::flush;
+						std::cout << "\r" << "[" << (unsigned long long)time<< " P/s]"<< "[total "<<i << "]"<< "[" << percentage << "% done][100% in " << done_in_mon << " months]"<< padding <<std::flush;
 
 					else
-						std::cout << "\r" << "[" << (unsigned long long)time<< " P/s]"<< "[total "<<i << "]"<< "[" << percentage << "% done][100% in " << done_in_y << " years]"<<std::flush;
+						std::cout << "\r" << "[" << (unsigned long long)time<< " P/s]"<< "[total "<<i << "]"<< "[" << percentage << "% done][100% in " << done_in_y << " years]"<< padding << std::flush;
 
 				}
 			}
@@ -765,7 +771,7 @@ void progressSim(unsigned long long i, unsigned long long N, Timer timer, bool m
 }
 
 //Main Simulation Loop for bruteforce
-void doWork(unsigned long long start, unsigned long long end, std::vector<std::vector<int>> adj, std::vector <struct VertexData> Vertices_Vector, std::vector<int> Sorted, std::vector<std::string> Tests, bool updateScreen, unsigned long long n, bool fault_dropping){
+void doWork(unsigned long long start, unsigned long long end, std::vector<std::vector<int>> adj, std::vector <struct VertexData> Vertices_Vector, std::vector<int> Sorted, std::vector<std::string> Tests, bool updateScreen, unsigned long long n, bool fault_dropping, bool percentage_bar){
 
 
 		unsigned long long N = end-start;
@@ -773,26 +779,24 @@ void doWork(unsigned long long start, unsigned long long end, std::vector<std::v
 		unsigned long long j = 0;	
 
 		
-		g_display_mutex.lock();
-			std::thread::id this_id = std::this_thread::get_id();
-  		std::cout << "thread " << this_id << " starting with range "<<start<<" - "<<end << " total: "<< N << std::endl;
-		g_display_mutex.unlock();
-
-		//Copy All faults to a local variable
-		std::vector<std::pair<int,int>> Local_Faults_Vector = Global_Faults_Vector;
+		//g_display_mutex.lock();
+			//std::thread::id this_id = std::this_thread::get_id();
+  		//std::cout << "thread " << this_id << " starting with range "<<start<<" - "<<end << " total: "<< N << std::endl;
+		//g_display_mutex.unlock();
 
 		//Sleep for 1 second
-		std::this_thread::sleep_for (std::chrono::seconds(1));
+		//std::this_thread::sleep_for (std::chrono::seconds(1));
 	
 		//For each test vector
 		for(unsigned long long k = start; k <= end; k++){
 			
 			std::string pattern = Tests[k];
-			
+		
+			/*	
 			g_display_mutex.lock();
 				std::cout << this_id << " Checking :" << pattern << std::endl;
 			g_display_mutex.unlock();
-	
+			*/
 
 			//Declarations
 			std::vector<int> input_vector;
@@ -821,43 +825,45 @@ void doWork(unsigned long long start, unsigned long long end, std::vector<std::v
 	
 			
 			//For each Global Fault	
-			for (std::vector<std::pair<int,int>>::iterator it = Local_Faults_Vector.begin() ; it != Local_Faults_Vector.end();){
+			for (unsigned long long p = 0; p < Global_Faults_Vector.size(); p++){
+
+	
+				std::pair<int,int> current_fault = Global_Faults_Vector[p];
 
 
 				//If fault not in global vector skip it
-				if(true)
+				if(std::find(Skipped_Faults_Vector.begin(), Skipped_Faults_Vector.end(), p) == Skipped_Faults_Vector.end())
 				{
 					//Measure time
 					Timer timer;			
 	
-					std::vector<int> faulty_output = evaluate(adj,Vertices_Vector,Sorted,input_vector,true,*it);			
+					std::vector<int> faulty_output = evaluate(adj,Vertices_Vector,Sorted,input_vector,true,current_fault);			
 
 					if(faulty_output != correct_output){
 						#ifdef DEBUG
 							std::cout << "I CAN DETECT BUG WITH Input:" << printVector(input_vector) << " "; 
 							std::cout << "Correct Output:" << printVector(correct_output) << " ";
-							std::cout << "Faulty Output: "  <<Vertices_Vector[(*it).first].component_name << "-"<<(*it).first << " sa-" <<(*it).second <<": " << printVector(faulty_output) << std::endl;
+							std::cout << "Faulty Output: "  <<Vertices_Vector[(current_fault).first].component_name << "-"<<(current_fault).first << " sa-" <<(current_fault).second <<": " << printVector(faulty_output) << std::endl;
 						#endif
 
 
-						g_fault_mutex.lock();
-							Global_Faults_Set.insert(*it);
-						g_fault_mutex.unlock();
+						g_set_mutex.lock();
+							Global_Faults_Set.insert(current_fault);
+						g_set_mutex.unlock();
 
 						if(fault_dropping){
 							g_fault_mutex.lock();
-								it = Global_Faults_Vector.erase(it);
+								Skipped_Faults_Vector.push_back(p);
 							g_fault_mutex.unlock();
-						}else{
-							++it;
 						}
-					}else{
-						++it;
+						
 					}
+					
 				
-					if(updateScreen){	
+							
+					if(updateScreen && percentage_bar){	
 						// For progress bar	
-						int F = (end-start)*Local_Faults_Vector.size();
+						int F = (end-start)*Global_Faults_Vector.size();
 //					std::cout << "Itteration  "<< (*it).first << " - " << (*it).second << "\n";
 						//Pretty Printing (inaccurate)
 						progressSim(j,F,timer,true,n);
@@ -1538,7 +1544,7 @@ int main(int argc, char *argv[]){
 	//Checkpoint Theorem
 	bool checkpoint = true; 
 
-	bool fault_dropping = true;
+	bool fault_dropping = false;
 
 	if(checkpoint){
 		
@@ -1584,99 +1590,99 @@ int main(int argc, char *argv[]){
 	//First = id of gate's output that is stuck at either 0 or 1	
 	//Second = 1 or 0
 	std::set<std::pair<int,int>> Faults_Set;
+
+	//Serial Fault Simulation	
+	if(threads == -2){
+		//Single Threaded Simulation for input file
+		if(test_given){
+
+			unsigned long long N = Tests.size();	
+			unsigned long long i = 0;
+			unsigned long long j = 0;	
+		
+			if(percentage_bar)
+				std::cout << "Max Patterns: " << N * Faults_Vector.size() << std::endl;
+
+			//For each test vector
+			for(auto& pattern : Tests){
+			
+				//Declarations
+				std::vector<int> input_vector;
+
+				//Stuck at fault model
+				std::pair<int,int> empty_fault;
+			
+				//Construct input vector
+				for(int i = 0; i < pattern.size(); i++){
+		
+					if(pattern[i] == '0'){
+						input_vector.push_back(0);
+					}
+					else if(pattern[i] == '1'){
+						input_vector.push_back(1);
+					}
+					else if(pattern[i] == '2'){
+						//Don't care
+						std::cout << "Encountered a Don't Care\n";
+						return -1;
+					}
+				}
+			
+				//Evaluate Netlist (non faulty conditions)
+				std::vector<int> correct_output = evaluate(adj,Vertices_Vector,Sorted,input_vector,false,empty_fault);
+		
+				//For each Fault	
+				for (std::vector<std::pair<int,int>>::iterator it = Faults_Vector.begin() ; it != Faults_Vector.end();){
+
+					//Measure time
+					Timer timer;			
 	
-	//#define SINGLE
-	#ifdef SINGLE
-	//Single Threaded Simulation for input file
-	if(test_given){
+					std::vector<int> faulty_output = evaluate(adj,Vertices_Vector,Sorted,input_vector,true,*it);			
 
-		unsigned long long N = Tests.size();	
-		unsigned long long i = 0;
-		unsigned long long j = 0;	
-		
-		if(percentage_bar)
-			std::cout << "Max Patterns: " << N * Faults_Vector.size() << std::endl;
+					if(faulty_output != correct_output){
 
-		//For each test vector
-		for(auto& pattern : Tests){
-			
-			//Declarations
-			std::vector<int> input_vector;
+						#ifdef DEBUG
+							std::cout << "I CAN DETECT BUG WITH Input:" << printVector(input_vector) << " "; 
+							std::cout << "Correct Output:" << printVector(correct_output) << " ";
+							std::cout << "Faulty Output: "  <<Vertices_Vector[(*it).first].component_name << "-"<<(*it).first << " sa-" <<(*it).second <<": " << printVector(faulty_output) << std::endl;
+						#endif
 
-			//Stuck at fault model
-			std::pair<int,int> empty_fault;
-			
-			//Construct input vector
-			for(int i = 0; i < pattern.size(); i++){
-		
-				if(pattern[i] == '0'){
-					input_vector.push_back(0);
-				}
-				else if(pattern[i] == '1'){
-					input_vector.push_back(1);
-				}
-				else if(pattern[i] == '2'){
-					//Don't care
-					std::cout << "Encountered a Don't Care\n";
-					return -1;
-				}
-			}
-			
-			//Evaluate Netlist (non faulty conditions)
-			std::vector<int> correct_output = evaluate(adj,Vertices_Vector,Sorted,input_vector,false,empty_fault);
-		
-			//For each Fault	
-			for (std::vector<std::pair<int,int>>::iterator it = Faults_Vector.begin() ; it != Faults_Vector.end();){
+						Faults_Set.insert(*it);
 
-				//Measure time
-				Timer timer;			
-	
-				std::vector<int> faulty_output = evaluate(adj,Vertices_Vector,Sorted,input_vector,true,*it);			
+						if(fault_dropping){
+							it = Faults_Vector.erase(it);
+						}else{
+							++it;
+						}
 
-				if(faulty_output != correct_output){
-
-					#ifdef DEBUG
-						std::cout << "I CAN DETECT BUG WITH Input:" << printVector(input_vector) << " "; 
-						std::cout << "Correct Output:" << printVector(correct_output) << " ";
-						std::cout << "Faulty Output: "  <<Vertices_Vector[(*it).first].component_name << "-"<<(*it).first << " sa-" <<(*it).second <<": " << printVector(faulty_output) << std::endl;
-					#endif
-
-					Faults_Set.insert(*it);
-
-					if(fault_dropping){
-												it = Faults_Vector.erase(it);
 					}else{
 						++it;
 					}
-
-				}else{
-					++it;
-				}
 				
-				if(percentage_bar){	
-					// For progress bar	
-					int F = N * circuit_faults;
+					if(percentage_bar){	
+						// For progress bar	
+						int F = N * circuit_faults;
 
-					//Pretty Printing (inaccurate)
-					progressSim(j,F,timer,false,0);
+						//Pretty Printing (inaccurate)
+						progressSim(j,F,timer,false,0);
+					}
+					j++;	
+
 				}
-				j++;	
 
+				i++;
 			}
 
-			i++;
+		//Pretty Printing
+		std::cout << std::endl;
+
 		}
-
-	//Pretty Printing
-	std::cout << std::endl;
-
-	}
-	#endif
+	}//if serial
 
 	//Print Fault stats 
 	//printFaultStats(circuit_faults,Faults_Set.size());
 		
-	//Multithreaded Simulation for not input file
+	//Multithreaded Simulation
 	if(threads > -2 && test_given){
 		
 		std::cout << "Parallel Simulation\n";
@@ -1725,12 +1731,12 @@ int main(int argc, char *argv[]){
 		for(unsigned long long i = 0; i < n; i++){		
 			//Special thread ;)
 			if(i == n-1){
-				Thread_Vector.emplace_back(doWork,Range_Vector[i].first,Range_Vector[i].second, adj, Vertices_Vector, Sorted, Tests, true, n, fault_dropping);
+				Thread_Vector.emplace_back(doWork,Range_Vector[i].first,Range_Vector[i].second, adj, Vertices_Vector, Sorted, Tests, true, n, fault_dropping, percentage_bar);
 
 			}
 			
 			else{
-				Thread_Vector.emplace_back(doWork,Range_Vector[i].first,Range_Vector[i].second, adj, Vertices_Vector, Sorted, Tests, false, n, fault_dropping);
+				Thread_Vector.emplace_back(doWork,Range_Vector[i].first,Range_Vector[i].second, adj, Vertices_Vector, Sorted, Tests, false, n, fault_dropping, percentage_bar);
 
 			}
 		}
@@ -1742,9 +1748,6 @@ int main(int argc, char *argv[]){
 		}
 
 		std::cout << std::endl;
-
-		std::cout << "Parallel Fault Coverage: "<<getFaultCoverage(circuit_faults,Global_Faults_Set.size()) << std::endl;
-
 
 	}
 	//Single Threaded Simulation
@@ -1762,7 +1765,14 @@ int main(int argc, char *argv[]){
 
 		//Calculate Graph Size 
 		int bytes = getGraphSize(adj,Vertices_Vector);
-		float fault_coverage = getFaultCoverage(circuit_faults, Faults_Set.size());
+		float fault_coverage;
+
+		if(threads == -2){
+			fault_coverage = getFaultCoverage(circuit_faults, Faults_Set.size());
+		}
+		else{
+			fault_coverage = getFaultCoverage(circuit_faults,Global_Faults_Set.size());
+		}
 
 		std::stringstream stream;
 		stream << std::fixed << std::setprecision(2) << fault_coverage;
