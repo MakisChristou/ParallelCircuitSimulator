@@ -35,6 +35,8 @@ std::vector <std::pair<std::vector<int>,std::vector<int>>> Response_Vector_Singl
 std::vector <std::pair<std::vector<int>,std::vector<int>>> Response_Vector_Multi;
 
 
+//#define SOFR
+
 //If you want verbose output uncomment the following line
 //#define VERBOSE
 
@@ -53,6 +55,7 @@ bool argument_flag = false;
 bool print_graphviz = false;
 bool percentage_bar = false;
 int threads = -2;
+bool fault_dropping = false;
 
 //For Parallel Simulation
 std::set<std::pair<int,int>> Global_Faults_Set;
@@ -1001,6 +1004,11 @@ int main(int argc, char *argv[]){
 				print_stats = true;
 			}		
 
+			//Fault Dropping or not
+			else if((std::string)argv[i] == "-D" && argument_flag == true){
+				fault_dropping = true;
+			}		
+
 			//Graphviz
 			else if((std::string)argv[i] == "-G" && argument_flag == true){
 				print_graphviz = true;
@@ -1544,8 +1552,7 @@ int main(int argc, char *argv[]){
 	//Checkpoint Theorem
 	bool checkpoint = true; 
 
-	bool fault_dropping = false;
-
+	
 	if(checkpoint){
 		
 		//Restart Vector
@@ -1630,7 +1637,17 @@ int main(int argc, char *argv[]){
 			
 				//Evaluate Netlist (non faulty conditions)
 				std::vector<int> correct_output = evaluate(adj,Vertices_Vector,Sorted,input_vector,false,empty_fault);
-		
+	
+
+				#ifdef SOFR
+				for(int i = 0; i < correct_output.size(); i++)
+				{
+					std::cout << correct_output[i];
+				}
+				std::cout << std::endl;
+				#endif
+
+
 				//For each Fault	
 				for (std::vector<std::pair<int,int>>::iterator it = Faults_Vector.begin() ; it != Faults_Vector.end();){
 
@@ -1774,12 +1791,28 @@ int main(int argc, char *argv[]){
 			fault_coverage = getFaultCoverage(circuit_faults,Global_Faults_Set.size());
 		}
 
+		std::string Dropping = "";
+		if(fault_dropping){
+			Dropping = " Dropping:YES";
+		}
+		else{
+			Dropping = " Dropping:NO";
+		}
+
+		std::string Mode = "";
+
+		if(threads == -2){
+			Mode = " Mode:SERIAL";
+		}else{
+			Mode = " Mode:Parallel";
+		}
+
 		std::stringstream stream;
 		stream << std::fixed << std::setprecision(2) << fault_coverage;
 		std::string s = stream.str();
 
 
-		stats = " LINES:"+std::to_string(index)+" NAND:"+std::to_string(NAND)+" AND:"+std::to_string(AND)+" OR:"+std::to_string(OR)+" NOR:"+std::to_string(NOR)+" NOT:"+std::to_string(NOT)+" BUFF:"+std::to_string(BUFF)+" INPUT:"+std::to_string(INPUT)+" OUTPUT:"+std::to_string(OUTPUT)+" KB:"+std::to_string(bytes/1024)+" PATHS:"+std::to_string(PATHS)+" COVERAGE:"+s+"%";
+		stats = " LINES:"+std::to_string(index)+" NAND:"+std::to_string(NAND)+" AND:"+std::to_string(AND)+" OR:"+std::to_string(OR)+" NOR:"+std::to_string(NOR)+" NOT:"+std::to_string(NOT)+" BUFF:"+std::to_string(BUFF)+" INPUT:"+std::to_string(INPUT)+" OUTPUT:"+std::to_string(OUTPUT)+" KB:"+std::to_string(bytes/1024)+" PATHS:"+std::to_string(PATHS)+" COVERAGE:"+s+"%"+Dropping+Mode;
 	}
 
 	//Print to Graphviz file

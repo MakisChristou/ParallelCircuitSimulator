@@ -1,13 +1,24 @@
 \documentclass{article}
 \author{Michalis Christou}
-\title{HMY 407 Report}
+\title{Parallel vs Serial Fault Simulator}
 \begin{document}
 \maketitle
+
+\section*{Introduction}
+The purpose of this project is to write a fault simulator in C++ that has both parallel and serial modes of operation. The goal is to examine the speedup of the parallel implementation compared to the serial version as well as compare any potantial speeups that can occur with or without fault dropping in both cases.
+
+
+\section*{Backround}
+\subsection*{Single Stuck at Fault Model}
+Faults in circuits can be modeled in many ways. The model that was used for the purposes of this project was the single stuck at fault model. In this case the circuit, which is a gate level netlist, has only one faulty line that is either stuck permanently at $1$ or $0$ and the fault can be at an input or output of a gate.
+
+\subsection*{Checkpoint Theorem}
+
 
 \section*{Fault Simulation}
 
 
+
 \section*{Results}
-\subsection*{Parallel vs Serial}
 
 \end{document}
