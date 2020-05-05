@@ -22,7 +22,7 @@
 std::mutex g_display_mutex;
 
 //For saving thread results
-std::mutex g_vector_mutex;
+std::mutex g_fault_mutex;
 
 //Vector with Results (Single Threaded)
 std::vector <std::pair<std::vector<int>,std::vector<int>>> Response_Vector_Single;
@@ -49,6 +49,11 @@ bool argument_flag = false;
 bool print_graphviz = false;
 bool percentage_bar = false;
 int threads = -2;
+
+//For Parallel Simulation
+std::set<std::pair<int,int>> Global_Faults_Set;
+std::vector<std::pair<int,int>> Global_Faults_Vector;
+
 
 //Timer Class for performance evaluation
 class Timer{
@@ -760,10 +765,12 @@ void progressSim(unsigned long long i, unsigned long long N, Timer timer, bool m
 }
 
 //Main Simulation Loop for bruteforce
-void doWork(unsigned long long start, unsigned long long end, std::vector<std::vector<int>> adj, std::vector <struct VertexData> Vertices_Vector, std::vector<int> Sorted, bool updateScreen, unsigned long long n){
+void doWork(unsigned long long start, unsigned long long end, std::vector<std::vector<int>> adj, std::vector <struct VertexData> Vertices_Vector, std::vector<int> Sorted, std::vector<std::string> Tests, bool updateScreen, unsigned long long n, bool fault_dropping){
 
 
 		unsigned long long N = end-start;
+		unsigned long long i = 0;
+		unsigned long long j = 0;	
 
 		
 		g_display_mutex.lock();
@@ -773,6 +780,98 @@ void doWork(unsigned long long start, unsigned long long end, std::vector<std::v
 		
 		//Sleep for 1 second
 		std::this_thread::sleep_for (std::chrono::seconds(1));
+
+		std::vector<std::pair<int,int>> Local_Faults_Vector = Global_Faults_Vector;
+
+		//For each test vector
+		for(unsigned long long k = start; k <= end; k++){
+			
+			std::string pattern = Tests[k];
+			
+			g_display_mutex.lock();
+				std::cout << this_id << " Checking :" << pattern << std::endl;
+			g_display_mutex.unlock();
+	
+
+			//Declarations
+			std::vector<int> input_vector;
+
+			//Stuck at fault model
+			std::pair<int,int> empty_fault;
+			
+			//Construct input vector
+			for(int i = 0; i < pattern.size(); i++){
+		
+				if(pattern[i] == '0'){
+					input_vector.push_back(0);
+				}
+				else if(pattern[i] == '1'){
+					input_vector.push_back(1);
+				}
+				else if(pattern[i] == '2'){
+					//Don't care
+					std::cout << "Encountered a Don't Care\n";
+					return ;
+				}
+			}
+			
+			//Evaluate Netlist (non faulty conditions)
+			std::vector<int> correct_output = evaluate(adj,Vertices_Vector,Sorted,input_vector,false,empty_fault);
+	
+			
+			//For each Global Fault	
+			for (std::vector<std::pair<int,int>>::iterator it = Local_Faults_Vector.begin() ; it != Local_Faults_Vector.end();){
+
+
+
+				//If local fault is not a global fault (i.e. some other thread detected it)
+				if(std::find(Global_Faults_Vector.begin(), Global_Faults_Vector.end(), *it) == Global_Faults_Vector.end()){
+					
+				}
+
+				//Measure time
+				Timer timer;			
+	
+				std::vector<int> faulty_output = evaluate(adj,Vertices_Vector,Sorted,input_vector,true,*it);			
+
+				if(faulty_output != correct_output){
+
+					#ifdef DEBUG
+						std::cout << "I CAN DETECT BUG WITH Input:" << printVector(input_vector) << " "; 
+						std::cout << "Correct Output:" << printVector(correct_output) << " ";
+						std::cout << "Faulty Output: "  <<Vertices_Vector[(*it).first].component_name << "-"<<(*it).first << " sa-" <<(*it).second <<": " << printVector(faulty_output) << std::endl;
+					#endif
+
+
+					g_fault_mutex.lock();
+						Global_Faults_Set.insert(*it);
+					g_fault_mutex.unlock();
+
+					if(fault_dropping){
+						g_fault_mutex.lock();
+							it = Global_Faults_Vector.erase(it);
+						g_fault_mutex.unlock();
+					}else{
+						++it;
+					}
+
+				}else{
+					++it;
+				}
+				
+				if(updateScreen){	
+					// For progress bar	
+					int F = end-start;
+					std::cout << "Itteration  "<< (*it).first << " - " << (*it).second << "\n";
+					//Pretty Printing (inaccurate)
+					progressSim(j,F,timer,true,n);
+				}
+				j++;	
+
+			}
+
+			i++;
+		}
 
 }
 
@@ -1478,6 +1577,10 @@ int main(int argc, char *argv[]){
 	} //Done with checkpoint theorem
 
 
+	//Parallel Initializations (Checkpoint Theorem Fault List)
+	Global_Faults_Vector = Faults_Vector;
+
+
 	int circuit_faults = checkpoint_fault_sites * 2;
 
 	//Faults that Test Vectors are able to detect
@@ -1536,9 +1639,9 @@ int main(int argc, char *argv[]){
 				if(faulty_output != correct_output){
 
 					#ifdef DEBUG
-					std::cout << "I CAN DETECT BUG WITH Input:" << printVector(input_vector) << " "; 
-					std::cout << "Correct Output:" << printVector(correct_output) << " ";
-					std::cout << "Faulty Output: "  <<Vertices_Vector[(*it).first].component_name << "-"<<(*it).first << " sa-" <<(*it).second <<": " << printVector(faulty_output) << std::endl;
+						std::cout << "I CAN DETECT BUG WITH Input:" << printVector(input_vector) << " "; 
+						std::cout << "Correct Output:" << printVector(correct_output) << " ";
+						std::cout << "Faulty Output: "  <<Vertices_Vector[(*it).first].component_name << "-"<<(*it).first << " sa-" <<(*it).second <<": " << printVector(faulty_output) << std::endl;
 					#endif
 
 					Faults_Set.insert(*it);
@@ -1600,7 +1703,7 @@ int main(int argc, char *argv[]){
 
 		std::vector <std::pair<unsigned long long , unsigned long long>> Range_Vector;
 
-		//Split work equally for N threads
+		//Split work "equally" for N threads
 		for(int i = 1; i<(n+1); i++){
 			
 			if(i == n){
@@ -1625,12 +1728,12 @@ int main(int argc, char *argv[]){
 		for(unsigned long long i = 0; i < n; i++){		
 			//Special thread ;)
 			if(i == n-1){
-				Thread_Vector.emplace_back(doWork,Range_Vector[i].first,Range_Vector[i].second, adj, Vertices_Vector, Sorted, true, n);
+				Thread_Vector.emplace_back(doWork,Range_Vector[i].first,Range_Vector[i].second, adj, Vertices_Vector, Sorted, Tests, true, n, fault_dropping);
 
 			}
 			
 			else{
-				Thread_Vector.emplace_back(doWork,Range_Vector[i].first,Range_Vector[i].second, adj, Vertices_Vector, Sorted, false, n);
+				Thread_Vector.emplace_back(doWork,Range_Vector[i].first,Range_Vector[i].second, adj, Vertices_Vector, Sorted, Tests, false, n, fault_dropping);
 
 			}
 		}
@@ -1642,6 +1745,9 @@ int main(int argc, char *argv[]){
 		}
 
 		std::cout << std::endl;
+
+		std::cout << "Parallel Fault Coverage: "<<getFaultCoverage(circuit_faults,Global_Faults_Set.size()) << std::endl;
+
 
 	}
 	//Single Threaded Simulation
