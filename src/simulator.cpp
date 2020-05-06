@@ -1702,7 +1702,7 @@ int main(int argc, char *argv[]){
 	//Multithreaded Simulation
 	if(threads > -2 && test_given){
 		
-		std::cout << "Parallel Simulation\n";
+		//std::cout << "Parallel Simulation\n";
 
 		unsigned long long n;
 
@@ -1711,7 +1711,7 @@ int main(int argc, char *argv[]){
 		}else{
 			n = threads;
 		}
-		std::cout << "Threads Used: " << n << std::endl;
+		//std::cout << "Threads Used: " << n << std::endl;
 
 		//Construct Ranges
 		unsigned long long start_range = 0;
@@ -1719,7 +1719,7 @@ int main(int argc, char *argv[]){
 
 		unsigned long long N = Tests.size();
 
-		std::cout << "Tests: " << N << "\n";	
+		//std::cout << "Tests: " << N << "\n";	
 
 		std::vector <std::pair<unsigned long long , unsigned long long>> Range_Vector;
 

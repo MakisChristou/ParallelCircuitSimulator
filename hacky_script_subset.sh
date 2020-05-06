@@ -24,19 +24,6 @@ rm Results
 ./simulator -C ISCAS/iscas89/s208.1.bench -I TESTS/iscas89/test\ suite\ 1/s208.vec -T s -S >> Results
 ./simulator -C ISCAS/iscas89/s349.bench -I TESTS/iscas89/test\ suite\ 1/s349.vec -T s -S >> Results
 ./simulator -C ISCAS/iscas89/s444.bench -I TESTS/iscas89/test\ suite\ 1/s444.vec -T s -S >> Results
-./simulator -C ISCAS/iscas89/s1238.bench -I TESTS/iscas89/test\ suite\ 1/s1238.vec -T s -S >> Results
-./simulator -C ISCAS/iscas89/s1494.bench -I TESTS/iscas89/test\ suite\ 1/s1494.vec -T s -S >> Results
-./simulator -C ISCAS/iscas89/s5378.bench -I TESTS/iscas89/test\ suite\ 1/s5378.vec -T s -S >> Results
-./simulator -C ISCAS/iscas89/s832.bench -I TESTS/iscas89/test\ suite\ 1/s832.vec -T s -S >> Results
-./simulator -C ISCAS/iscas89/s1423.bench -I TESTS/iscas89/test\ suite\ 1/s1423.vec -T s -S >> Results
-./simulator -C ISCAS/iscas89/s1196.1.bench -I TESTS/iscas89/test\ suite\ 1/s1196.vec -T s -S >> Results
-./simulator -C ISCAS/iscas89/s1488.bench -I TESTS/iscas89/test\ suite\ 1/s1488.vec -T s -S >> Results
-./simulator -C ISCAS/iscas89/s9234.bench -I TESTS/iscas89/test\ suite\ 1/s9234.vec -T s -S >> Results
-./simulator -C ISCAS/iscas89/s13207.bench -I TESTS/iscas89/test\ suite\ 1/s13207.vec -T s -S >> Results
-./simulator -C ISCAS/iscas89/s15850.bench -I TESTS/iscas89/test\ suite\ 1/s15850.vec -T s -S >> Results
-./simulator -C ISCAS/iscas89/s38417.bench -I TESTS/iscas89/test\ suite\ 1/s38417.vec -T s -S >> Results
-./simulator -C ISCAS/iscas89/s38584.bench -I TESTS/iscas89/test\ suite\ 1/s38584.vec -T s -S >> Results
-./simulator -C ISCAS/iscas89/s35932.bench -I TESTS/iscas89/test\ suite\ 1/s35932.vec -T s -S >> Results
 
 # ISCAS 89 (Serial Fault Drop)
 ./simulator -C ISCAS/iscas89/s27.bench -I TESTS/iscas89/test\ suite\ 1/s27.vec -T s -S -D >> Results
@@ -58,19 +45,6 @@ rm Results
 ./simulator -C ISCAS/iscas89/s208.1.bench -I TESTS/iscas89/test\ suite\ 1/s208.vec -T s -S -D >> Results
 ./simulator -C ISCAS/iscas89/s349.bench -I TESTS/iscas89/test\ suite\ 1/s349.vec -T s -S -D >> Results
 ./simulator -C ISCAS/iscas89/s444.bench -I TESTS/iscas89/test\ suite\ 1/s444.vec -T s -S -D >> Results
-./simulator -C ISCAS/iscas89/s1238.bench -I TESTS/iscas89/test\ suite\ 1/s1238.vec -T s -S -D >> Results
-./simulator -C ISCAS/iscas89/s1494.bench -I TESTS/iscas89/test\ suite\ 1/s1494.vec -T s -S -D >> Results
-./simulator -C ISCAS/iscas89/s5378.bench -I TESTS/iscas89/test\ suite\ 1/s5378.vec -T s -S -D >> Results
-./simulator -C ISCAS/iscas89/s832.bench -I TESTS/iscas89/test\ suite\ 1/s832.vec -T s -S -D >> Results
-./simulator -C ISCAS/iscas89/s1423.bench -I TESTS/iscas89/test\ suite\ 1/s1423.vec -T s -S -D >> Results
-./simulator -C ISCAS/iscas89/s1196.1.bench -I TESTS/iscas89/test\ suite\ 1/s1196.vec -T s -S -D >> Results
-./simulator -C ISCAS/iscas89/s1488.bench -I TESTS/iscas89/test\ suite\ 1/s1488.vec -T s -S -D >> Results
-./simulator -C ISCAS/iscas89/s9234.bench -I TESTS/iscas89/test\ suite\ 1/s9234.vec -T s -S -D >> Results
-./simulator -C ISCAS/iscas89/s13207.bench -I TESTS/iscas89/test\ suite\ 1/s13207.vec -T s -S -D >> Results
-./simulator -C ISCAS/iscas89/s15850.bench -I TESTS/iscas89/test\ suite\ 1/s15850.vec -T s -S -D >> Results
-./simulator -C ISCAS/iscas89/s38417.bench -I TESTS/iscas89/test\ suite\ 1/s38417.vec -T s -S -D >> Results
-./simulator -C ISCAS/iscas89/s38584.bench -I TESTS/iscas89/test\ suite\ 1/s38584.vec -T s -S -D >> Results
-./simulator -C ISCAS/iscas89/s35932.bench -I TESTS/iscas89/test\ suite\ 1/s35932.vec -T s -S -D >> Results
 
 # ISCAS 89 (Serial Parallel Fault Drop)
 ./simulator -C ISCAS/iscas89/s27.bench -I TESTS/iscas89/test\ suite\ 1/s27.vec -T s -S -P $threads >> Results
@@ -92,19 +66,6 @@ rm Results
 ./simulator -C ISCAS/iscas89/s208.1.bench -I TESTS/iscas89/test\ suite\ 1/s208.vec -T s -S -P $threads >> Results
 ./simulator -C ISCAS/iscas89/s349.bench -I TESTS/iscas89/test\ suite\ 1/s349.vec -T s -S -P $threads >> Results
 ./simulator -C ISCAS/iscas89/s444.bench -I TESTS/iscas89/test\ suite\ 1/s444.vec -T s -S -P $threads >> Results
-./simulator -C ISCAS/iscas89/s1238.bench -I TESTS/iscas89/test\ suite\ 1/s1238.vec -T s -S -P $threads >> Results
-./simulator -C ISCAS/iscas89/s1494.bench -I TESTS/iscas89/test\ suite\ 1/s1494.vec -T s -S -P $threads >> Results
-./simulator -C ISCAS/iscas89/s5378.bench -I TESTS/iscas89/test\ suite\ 1/s5378.vec -T s -S -P $threads >> Results
-./simulator -C ISCAS/iscas89/s832.bench -I TESTS/iscas89/test\ suite\ 1/s832.vec -T s -S -P $threads >> Results
-./simulator -C ISCAS/iscas89/s1423.bench -I TESTS/iscas89/test\ suite\ 1/s1423.vec -T s -S -P $threads >> Results
-./simulator -C ISCAS/iscas89/s1196.1.bench -I TESTS/iscas89/test\ suite\ 1/s1196.vec -T s -S -P $threads >> Results
-./simulator -C ISCAS/iscas89/s1488.bench -I TESTS/iscas89/test\ suite\ 1/s1488.vec -T s -S -P $threads >> Results
-./simulator -C ISCAS/iscas89/s9234.bench -I TESTS/iscas89/test\ suite\ 1/s9234.vec -T s -S -P $threads >> Results
-./simulator -C ISCAS/iscas89/s13207.bench -I TESTS/iscas89/test\ suite\ 1/s13207.vec -T s -S -P $threads >> Results
-./simulator -C ISCAS/iscas89/s15850.bench -I TESTS/iscas89/test\ suite\ 1/s15850.vec -T s -S -P $threads >> Results
-./simulator -C ISCAS/iscas89/s38417.bench -I TESTS/iscas89/test\ suite\ 1/s38417.vec -T s -S -P $threads >> Results
-./simulator -C ISCAS/iscas89/s38584.bench -I TESTS/iscas89/test\ suite\ 1/s38584.vec -T s -S -P $threads >> Results
-./simulator -C ISCAS/iscas89/s35932.bench -I TESTS/iscas89/test\ suite\ 1/s35932.vec -T s -S -P $threads >> Results
 
 # ISCAS 89 (Parallel Fault Drop)
 ./simulator -C ISCAS/iscas89/s27.bench -I TESTS/iscas89/test\ suite\ 1/s27.vec -T s -S -P $threads -D >> Results
@@ -126,18 +87,5 @@ rm Results
 ./simulator -C ISCAS/iscas89/s208.1.bench -I TESTS/iscas89/test\ suite\ 1/s208.vec -T s -S -P $threads -D >> Results
 ./simulator -C ISCAS/iscas89/s349.bench -I TESTS/iscas89/test\ suite\ 1/s349.vec -T s -S -P $threads -D >> Results
 ./simulator -C ISCAS/iscas89/s444.bench -I TESTS/iscas89/test\ suite\ 1/s444.vec -T s -S -P $threads -D >> Results
-./simulator -C ISCAS/iscas89/s1238.bench -I TESTS/iscas89/test\ suite\ 1/s1238.vec -T s -S -P $threads -D >> Results
-./simulator -C ISCAS/iscas89/s1494.bench -I TESTS/iscas89/test\ suite\ 1/s1494.vec -T s -S -P $threads -D >> Results
-./simulator -C ISCAS/iscas89/s5378.bench -I TESTS/iscas89/test\ suite\ 1/s5378.vec -T s -S -P $threads -D >> Results
-./simulator -C ISCAS/iscas89/s832.bench -I TESTS/iscas89/test\ suite\ 1/s832.vec -T s -S -P $threads -D >> Results
-./simulator -C ISCAS/iscas89/s1423.bench -I TESTS/iscas89/test\ suite\ 1/s1423.vec -T s -S -P $threads -D >> Results
-./simulator -C ISCAS/iscas89/s1196.1.bench -I TESTS/iscas89/test\ suite\ 1/s1196.vec -T s -S -P $threads -D >> Results
-./simulator -C ISCAS/iscas89/s1488.bench -I TESTS/iscas89/test\ suite\ 1/s1488.vec -T s -S -P $threads -D >> Results
-./simulator -C ISCAS/iscas89/s9234.bench -I TESTS/iscas89/test\ suite\ 1/s9234.vec -T s -S -P $threads -D >> Results
-./simulator -C ISCAS/iscas89/s13207.bench -I TESTS/iscas89/test\ suite\ 1/s13207.vec -T s -S -P $threads -D >> Results
-./simulator -C ISCAS/iscas89/s15850.bench -I TESTS/iscas89/test\ suite\ 1/s15850.vec -T s -S -P $threads -D >> Results
-./simulator -C ISCAS/iscas89/s38417.bench -I TESTS/iscas89/test\ suite\ 1/s38417.vec -T s -S -P $threads -D >> Results
-./simulator -C ISCAS/iscas89/s38584.bench -I TESTS/iscas89/test\ suite\ 1/s38584.vec -T s -S -P $threads -D >> Results
-./simulator -C ISCAS/iscas89/s35932.bench -I TESTS/iscas89/test\ suite\ 1/s35932.vec -T s -S -P $threads -D >> Results
 
 

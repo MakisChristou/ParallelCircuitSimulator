@@ -1,4 +1,8 @@
-\documentclass{article}
+\documentclass[a4paper,11pt]{article}
+\usepackage{algorithm} 
+\usepackage{algpseudocode} 
+\usepackage[a4paper, total={6in, 10in}]{geometry}
+
 \author{Michalis Christou}
 \title{Parallel vs Serial Fault Simulator}
 \begin{document}
@@ -10,14 +14,57 @@ The purpose of this project is to write a fault simulator in C++ that has both p
 
 \section*{Backround}
 \subsection*{Single Stuck at Fault Model}
-Faults in circuits can be modeled in many ways. The model that was used for the purposes of this project was the single stuck at fault model. In this case the circuit, which is a gate level netlist, has only one faulty line that is either stuck permanently at $1$ or $0$ and the fault can be at an input or output of a gate.
+Faults in circuits can be modeled in many ways. The model that was used for the purposes of this project was the single stuck at fault model. In this case the circuit, which is a gate level netlist, has only one faulty line that is either stuck permanently at $1$ or $0$ and the fault can be at an input or output of a gate. The number of possible fault sites in a given netlist is $\# PI + \#GATES + \#(fanout branches)$ and subsequentltly since a fault site has 2 potential faults, the number of possible faults in a circuit is $2 \cdot \#(fault sites)$. 
+
+\subsection*{Fault Equivalence}
+Despite a circuit having a maximum number of possible stuck at faults, using some mechanisms we can choose a subset of these faults and if we are able to detect these it means that we can also detect the ones we skipped. For example, fault equivalence means that two faults $f_1, f_2$ are equivalent if all tests that detect $f_1$ also detect $f_2$ and vice versa. This means that if we are able to detect one of the two faults then we know doe sure that we can detect the other. Thus we can keep only one of these equivalent faults in our list. This is called fault collapsing. The results is a collapsed fault set that contains one fault from each equivalence subset.
+
+\subsection*{Fault Dominance}
+The definition of fault dominance is as follows, if all tests of some fault $f_1$ detect another fault $f_2$ then $f_2$ is said to dominate $f_1$. The rule that we use is if fault $f_2$ dominates $f_1$ then $f_2$ is removed from the fault list.
 
 \subsection*{Checkpoint Theorem}
+The checkpoint theorem is the result of Fault Equivalence and Fault Dominance. Primary inputs and fanout branches of a combinational circuit are called checkpoints. The theorem suggests that a test set that detects all single stuck at faults on all checkpoints of a combinational circuit also detects all single stuck at faults in that circuit. The checkpoints in a circuit are considered to be primary inputs and fanout branches. This means that if we only consider these fault sites and detect all faults in them, we can also detect all possible stuck at faults in that circuit.
 
-
+\clearpage
 \section*{Fault Simulation}
+Fault simulation is done in order to detect possible faults in a Boolean circuit. The algorithm is fairly simple and intuitive. First a set of test vectors is obtained. Then using these test vectors the non-faulty circuit response is computed. Then for each stuck at fault that is considered, the fault is injected in the circuit, the fault output is computed and compared to the normal non-faulty output. If the outputs differ, then the fault can be detected. In this case a detected fault counter is incremented. If fault dropping is enabled, then the stuck at fault is deleted from the set. After this is repeated for all test vectors and all faults in the set the fault coverage is computed which is the number of detected faults divided by the total number of faults considered. 
+
+$$FC = \frac{\#fd}{\#tf}$$
+
+The pseudocode for the serial algorithm is depicted below.
+
+\begin{algorithm}
+	\caption{Serial Fault Simulation} 
+	\begin{algorithmic}[1]
+		\State $\#fd = 0, \#tf = |F|$
+		\For {every test $t \in T$}
+			\State $Rt = $ true\_value\_simulation($t,C$)
+			\For {every fault $f \in F$}
+					\State inject\_fault($C,f$)
+					\State $Rf = $ fault\_simulation($C,f$)
+				\If {$Rt \neq Rf$}
+					\State $\#rf++$
+					\State $F = $ drop\_fault($t,F$)
+				\EndIf	
+			\EndFor
+		\EndFor
+					\State \textbf{return} $FC = $ compute\_fault\_coverage($\#fd,\#tf$)
+	\end{algorithmic} 
+\end{algorithm}
 
 
+\clearpage
+
+\section*{Implementation}
+This section is dedicated to explain the details and inner workings of the specific C++ implementation. The code is designed to parse \texttt{.bench} files that represent gate level netlists as well as test vectors of different formats. Then the code generates all faults according to the Checkpoint Theorem. Depending on the user input the program either runs the serial algorithm or parallel with or without fault dropping.
+
+\subsection*{Netlist Representation}
+The netlist is internally represented as a DAG (Directed Acyclic Graph). Specifically, since the purpose of the program is to simulate faults, the graph model that was chosen was $G_2$. This model uses one graph node per circuit line and one edge per pair of gates/fanout stems with direct connection, in order to explicitly represent fanout stems. This is necessary in this case because faults could happen in any circuit line thus explicit representation of every line is needed. The data structure used in this case was a $1-D$ array with linked lists, since generally speaking, Boolean circuits are sparse thus more memory is saved compared to using a $2-D$ array. 
+
+\subsection*{Parallelizing Fault Simulation}
+When parallelizing algorithms a lot has to be considered. Data dependencies is one aspect that leads to race conditions which in turn, leads to unpredictable code behaviour. In this case, the most important part of parallelizing the algorithm is to ensure that no data dependencies or race conditions would occur. In this case this was achieved easily by splitting the work in equal chunks to $N$ threads. Since each iteration is almost fully independent splitting the workflow to any number of threads was trivial once the serial algorithm was implemented. The workflow was split as follows: Each thread got a subset of the test vectors, then independently worked on identifying all faults that were previously generated with the checkpoint theorem and stored in a global variable. When using fault dropping threads that detect faults need to modify the global variable (that stores faults) in order to save time for other threads. To ensure that threads would not interfere with one another the global data structure was protected with a mutex since it was part of a critical region, but this was only a problem when using fault dropping. Without fault dropping each thread can work fully independent from any other one.
+
+\clearpage 
 
 \section*{Results}
 
