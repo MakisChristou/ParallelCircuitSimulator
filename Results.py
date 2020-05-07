@@ -27,6 +27,7 @@ paths = []
 coverage = []
 dropping = []
 parallel = []
+test = []
 
 filename = "Results" # change to Netlist_Stats and see Table1.tex 
 
@@ -47,7 +48,7 @@ for i in content:
 		pos2 = i.find(".bench")
 		
 		circuit_name = i[pos1:pos2]
-
+		
 		circuits.append(circuit_name)
 
 		pos3 = i.rfind('=')
@@ -73,6 +74,7 @@ for i in content:
 		pos16 = i.find("COVERAGE")
 		pos17 = i.find("Dropping")
 		pos18 = i.find("Thr")
+		pos19 = i.find("TEST:")
 
 		##################################
 		pos5 = pos5 + 6
@@ -181,11 +183,22 @@ for i in content:
 
 		pos18 = pos18 + 4
 
-		temp_parallel = i[pos18:-1]
+		temp_parallel = i[pos18:pos19]
 
 		parallel.append(temp_parallel)
 
 		###############################
+
+		pos19 = pos19 + 5
+
+		temp_test = i[pos19:-1]
+
+		test.append(temp_test)
+
+		###############################
+
+
+
 
 
 
@@ -253,13 +266,13 @@ file= open("Table2.tex","w")
 file.write("begin{center}\n")
 file.write("begin{tabular}{||c c c c c||}\n")
 file.write("\hline\n")
-file.write("Circuit & Time (s) & FC(\%) & FD & Thr \\\ [0.5ex] \n")
+file.write("Circuit & Time (s) & FC(\%) & FD & Thr & Test \\\ [0.5ex] \n")
 file.write("\hline\hline\n")
 
 
-for f, b,lin,na,a,nr,nt,bf,inp,out,pth,kk,cov,mode,par in zip(circuits, y,lines,nand,andd,nor,nott,buff,inputt,output,paths,kbb,coverage,dropping,parallel):
+for f, b,lin,na,a,nr,nt,bf,inp,out,pth,kk,cov,mode,par,tst in zip(circuits, y,lines,nand,andd,nor,nott,buff,inputt,output,paths,kbb,coverage,dropping,parallel,test):
         #print(f, b)
-        file.write(" " + f + " & " + str(b) +  " & "+ cov[:-2] + "\%" + " & " + mode + " & " + par + " \\\ \n")
+        file.write(" " + f + " & " + str(b) +  " & "+ cov[:-2] + "\%" + " & " + mode + " & " + par +" & " + tst +" \\\ \n")
         file.write("\hline\n")
 
 
@@ -271,9 +284,9 @@ file.write("\end{center}\n")
 #########################################################
 
 
-
 import sys
 sys.exit(1) # Or something that calls sys.exit().
+
 
 import numpy as np
 import matplotlib.pyplot as plt

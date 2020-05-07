@@ -1509,10 +1509,41 @@ int main(int argc, char *argv[]){
 		}
 		//.comp.10
 		else if(file_type == 2){
+						std::vector<std::string> Tests1;
 
+						for(auto & line : Tests)
+						{
+							std::string fixed_line = line.substr(3,line.size());
+
+							std::cout << fixed_line << std::endl;
+
+							Tests1.push_back(fixed_line);
+						}	
+						Tests.clear();
+						Tests = Tests1;
 		}
 		///benchtest.in
 		else if(file_type == 3){
+
+						std::vector<std::string> Tests1;
+
+						for(auto & line : Tests)
+						{
+							if((line.find("1") != std::string::npos) || (line.find("0") != std::string::npos)   || (line.find("2") != std::string::npos))
+							{
+								std::string fixed_line = line;
+
+								std::size_t found = fixed_line.find_last_of(":");
+								std::string test =  fixed_line.substr(found+2);
+
+								std::cout << test << std::endl;
+
+								Tests1.push_back(test);
+							}
+						}	
+						Tests.clear();
+						Tests = Tests1;
+	
 
 		}
 	}
@@ -1612,16 +1643,17 @@ int main(int argc, char *argv[]){
 
 			//For each test vector
 			for(auto& pattern : Tests){
-			
+				
+				
 				//Declarations
 				std::vector<int> input_vector;
 
 				//Stuck at fault model
 				std::pair<int,int> empty_fault;
-			
+
 				//Construct input vector
 				for(int i = 0; i < pattern.size(); i++){
-		
+
 					if(pattern[i] == '0'){
 						input_vector.push_back(0);
 					}
@@ -1810,8 +1842,10 @@ int main(int argc, char *argv[]){
 		stream << std::fixed << std::setprecision(2) << fault_coverage;
 		std::string s = stream.str();
 
+		std::size_t found = input_path.find_last_of("/\\");
+		std::string test=  input_path.substr(found+1);
 
-		stats = " LINES:"+std::to_string(index)+" NAND:"+std::to_string(NAND)+" AND:"+std::to_string(AND)+" OR:"+std::to_string(OR)+" NOR:"+std::to_string(NOR)+" NOT:"+std::to_string(NOT)+" BUFF:"+std::to_string(BUFF)+" INPUT:"+std::to_string(INPUT)+" OUTPUT:"+std::to_string(OUTPUT)+" KB:"+std::to_string(bytes/1024)+" PATHS:"+std::to_string(PATHS)+" COVERAGE:"+s+"%"+Dropping+Mode;
+		stats = " LINES:"+std::to_string(index)+" NAND:"+std::to_string(NAND)+" AND:"+std::to_string(AND)+" OR:"+std::to_string(OR)+" NOR:"+std::to_string(NOR)+" NOT:"+std::to_string(NOT)+" BUFF:"+std::to_string(BUFF)+" INPUT:"+std::to_string(INPUT)+" OUTPUT:"+std::to_string(OUTPUT)+" KB:"+std::to_string(bytes/1024)+" PATHS:"+std::to_string(PATHS)+" COVERAGE:"+s+"%"+Dropping+Mode+" TEST:"+test;
 	}
 
 	//Print to Graphviz file

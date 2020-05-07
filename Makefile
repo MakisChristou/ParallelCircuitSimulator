@@ -14,7 +14,7 @@ all: $(MYPROGRAM)
 
 $(MYPROGRAM): $(SOURCE)
 
-	$(CC)  $(SOURCE) -o$(MYPROGRAM) $(LIBS) -static
+	$(CC)  $(SOURCE) -o$(MYPROGRAM) $(LIBS) 
 
 clean:
 
