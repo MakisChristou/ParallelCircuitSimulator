@@ -24,6 +24,9 @@ inputt = []
 output = []
 kbb = []
 paths = []
+coverage = []
+dropping = []
+parallel = []
 
 filename = "Results"
 
@@ -32,136 +35,240 @@ with open(filename) as f:
         content = f.readlines()
 
 
+
 for i in content:
-    pos1 = i.rfind('/')
-    pos1 = pos1+1
+	
+	#  ignore empty lines
+	if i.strip():
 
-    pos2 = i.find(".bench")
-    
-    circuit_name = i[pos1:pos2]
+		pos1 = i.rfind('/')
+		pos1 = pos1+1
 
-    circuits.append(circuit_name)
+		pos2 = i.find(".bench")
+		
+		circuit_name = i[pos1:pos2]
 
-    pos3 = i.rfind('=')
-    pos3 = pos3 + 2
-    pos4 = i.find('[')
-    
-    execution_time = i[pos3:pos4]
+		circuits.append(circuit_name)
 
-    y.append(float(execution_time))
+		pos3 = i.rfind('=')
+		pos3 = pos3 + 2
+		pos4 = i.find('[')
+		
+		execution_time = i[pos3:pos4]
+		
+		
+		y.append(float(execution_time))
 
-    pos5 = i.find("LINES")
-    pos6 = i.find("NAND")
-    pos7 = i.rfind("AND")
-    pos8 = i.find("OR")
-    pos9 = i.find("NOR")
-    pos10 = i.find("NOT")
-    pos11 = i.find("BUFF")
-    pos12 = i.find("INPUT")
-    pos13 = i.find("OUTPUT")
-    pos14 = i.find("KB")
-    pos15 = i.find("PATHS")
+		pos5 = i.find("LINES")
+		pos6 = i.find("NAND")
+		pos7 = i.rfind("AND")
+		pos8 = i.find("OR")
+		pos9 = i.find("NOR")
+		pos10 = i.find("NOT")
+		pos11 = i.find("BUFF")
+		pos12 = i.find("INPUT")
+		pos13 = i.find("OUTPUT")
+		pos14 = i.find("KB")
+		pos15 = i.find("PATHS")
+		pos16 = i.find("COVERAGE")
+		pos17 = i.find("Dropping")
+		pos18 = i.find("Thr")
 
-    ##################################
-    pos5 = pos5 + 6
-    
-    temp_line = i[pos5:pos6]
-    
-    lines.append(temp_line)
-   
-    ###################################
-    pos6 = pos6 + 5
-   
-    temp_nand = i[pos6:pos7]
-    
-    nand.append(temp_nand)
-    
-    ##################################
-    
-    pos7 = pos7 + 4
+		##################################
+		pos5 = pos5 + 6
+		
+		temp_line = i[pos5:pos6]
+		
+		lines.append(int(temp_line))
+	   
+		###################################
+		pos6 = pos6 + 5
+	   
+		temp_nand = i[pos6:pos7]
+		
+		nand.append(int(temp_nand))
+		
+		##################################
+		
+		pos7 = pos7 + 4
 
-    temp_and = i[pos7:pos8] 
-     
-    andd.append(temp_and)
+		temp_and = i[pos7:pos8] 
+		 
+		andd.append(int(temp_and))
 
-    ##################################
-    pos8 = pos8 + 3
+		##################################
+		pos8 = pos8 + 3
 
-    temp_or = i[pos8:pos9]
+		temp_or = i[pos8:pos9]
 
-    orr.append(temp_or)
+		orr.append(int(temp_or))
 
-    ##################################
+		##################################
 
-    pos9 = pos9 + 4
+		pos9 = pos9 + 4
 
-    temp_nor = i[pos9:pos10]
+		temp_nor = i[pos9:pos10]
 
-    nor.append(temp_nor)
-    
-    ##################################
+		nor.append(int(temp_nor))
+		
+		##################################
 
-    pos10 = pos10 + 4
+		pos10 = pos10 + 4
 
-    temp_not = i[pos10:pos11]
+		temp_not = i[pos10:pos11]
 
-    nott.append(temp_not)
+		nott.append(int(temp_not))
 
-    #################################
-    
-    pos11 = pos11 + 5
+		#################################
+		
+		pos11 = pos11 + 5
 
-    temp_buff = i[pos11:pos12]
-    
-    buff.append(temp_buff)
+		temp_buff = i[pos11:pos12]
+		
+		buff.append(int(temp_buff))
 
-    #################################
+		#################################
 
-    pos12 = pos12 + 6
+		pos12 = pos12 + 6
 
-    temp_input = i[pos12:pos13]
+		temp_input = i[pos12:pos13]
 
-    inputt.append(temp_input)
+		inputt.append(int(temp_input))
 
-    #################################
+		#################################
 
 
-    pos13 = pos13 + 7
+		pos13 = pos13 + 7
 
-    temp_output = i[pos13:pos14]
+		temp_output = i[pos13:pos14]
 
-    output.append(temp_output)
+		output.append(int(temp_output))
 
-    
-    ################################
+		
+		################################
 
-    pos14 = pos14 + 3
-    
-    temp_kb = i[pos14:pos15]
+		pos14 = pos14 + 3
+		
+		temp_kb = i[pos14:pos15]
 
-    kbb.append(temp_kb)
+		kbb.append(int(temp_kb))
 
-    ################################
+		################################
 
-    pos15 = pos15 + 6
+		pos15 = pos15 + 6
 
-    temp_path = i[pos15:-1]
+		temp_path = i[pos15:pos16]
 
-    paths.append(temp_path)
+		paths.append(int(temp_path))
+		
+		###############################
 
-    ###############################
+		pos16 = pos16 + 9
+
+		temp_coverage = i[pos16:pos17]
+
+		coverage.append(temp_coverage)
+
+		###############################
+
+		pos17 = pos17 + 9
+
+		temp_mode = i[pos17:pos18]
+
+		dropping.append(temp_mode)
+
+		###############################
+
+		pos18 = pos18 + 4
+
+		temp_parallel = i[pos18:-1]
+
+		parallel.append(temp_parallel)
+
+		###############################
+
 
 
 # Write Markdown Matrix
 
 file= open("Table.md","w") 
 
-file.write("| Circuit | Time (ms) | Lines | # of Nand | # of And | #of Nor | # of Not | # of Buff | # of Inputs | # of Outputs |# Paths | Graph Size (KB) \n")
-file.write("| ------------- |-------------| ------------- |-------------| ------------- |-------------|------------- |-------------|------------- |-------------- |------------|-------------|\n")
+file.write("| Circuit | Time (s) | Lines | # of Nand | # of And | #of Nor | # of Not | # of Buff | # of Inputs | # of Outputs |# Paths | Graph Size (KB) | Coverage | Dropping | Mode | \n")
+file.write("| ------------- |-------------| ------------- |-------------| ------------- |-------------|------------- |-------------|------------- |-------------- |------------|-------------|-------------- |------------|-------------|\n")
 
 
-for f, b,lin,na,a,nr,nt,bf,inp,out,pth,kk in zip(circuits, y,lines,nand,andd,nor,nott,buff,inputt,output,paths,kbb):
+for f, b,lin,na,a,nr,nt,bf,inp,out,pth,kk,cov,mode,par in zip(circuits, y,lines,nand,andd,nor,nott,buff,inputt,output,paths,kbb,coverage,dropping,parallel):
         #print(f, b)
-        file.write("| " + f + " | " + str(b) + " | "+lin+" | "+na+" | "+a+" | "+nr+" | "+nt+" | "+bf+" | " + inp +" | " + out +" | "+pth + " | " + kk+" | \n")
+        file.write("| " + f + " | " + str(b) + " | "+str(lin)+" | "+str(na)+" | "+str(a)+" | "+str(nr)+" | "+str(nt)+" | "+str(bf)+" | " + str(inp) +" | " + str(out) +" | "+str(pth) + " | " + str(kk) + " | "+ cov + " | " + mode + " | " + par + " | \n")
 
+
+# Write Latex Matrix
+
+file= open("Table.tex","w") 
+file.write("\begin{center}\n")
+file.write("\begin{tabular}{||c c c c c c c c c c c c c c||}\n")
+file.write("\hline\n")
+file.write("Circuit & Time (s) & NAND & AND & NOR & NOT & BUFF & PI & PO & Paths & KB & FC(\%) & FD & Thr \\\ [0.5ex] \n")
+file.write("\hline\hline\n")
+
+
+for f, b,lin,na,a,nr,nt,bf,inp,out,pth,kk,cov,mode,par in zip(circuits, y,lines,nand,andd,nor,nott,buff,inputt,output,paths,kbb,coverage,dropping,parallel):
+        #print(f, b)
+        file.write(" " + f + " & " + str(b) + " & "+ ""+str(na)+" & "+str(a)+" & "+str(nr)+" & "+str(nt)+" & "+str(bf)+" & " + str(inp) +" & " + str(out) +" & "+str(pth) + " & " + str(kk) + " & "+ cov[:-2] + "\%" + " & " + mode + " & " + par + " \\\ \n")
+        file.write("\hline\n")
+
+
+file.write("\end{tabular}\n")
+file.write("\end{center}\n")
+
+#########################################################
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+
+coverage_int = []
+
+
+for i in coverage:
+	coverage_int.append(float(i[:-2]))
+
+
+x = range(len(circuits))
+pylab.xticks(x, circuits)
+plt.xlabel('Circuit Name')
+plt.ylabel('Fault Coverage (%)')
+plt.title('ECE 307 Project')
+plt.plot(circuits,coverage_int)
+
+plt.legend(['FC'])
+#plt.grid(axis='y')
+plt.grid(axis='x')
+plt.show()
+
+
+
+
+
+import sys
+sys.exit(1) # Or something that calls sys.exit().
+
+x = range(len(circuits))
+pylab.xticks(x, circuits)
+plt.xlabel('ISCAS89')
+plt.ylabel('# of Gates')
+plt.title('ECE 307 Project')
+plt.plot(circuits,nand)
+plt.plot(circuits,andd)
+plt.plot(circuits,orr)
+plt.plot(circuits,nor)
+plt.plot(circuits,nott)
+plt.plot(circuits,buff)
+plt.plot(circuits,inputt)
+plt.plot(circuits,output)
+
+plt.legend(['NAND','AND','OR','NOT','BUFF','PI','PO'])
+#plt.grid(axis='y')
+plt.grid(axis='x')
+plt.show()
 

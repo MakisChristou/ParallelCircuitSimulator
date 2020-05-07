@@ -64,8 +64,56 @@ The netlist is internally represented as a DAG (Directed Acyclic Graph). Specifi
 \subsection*{Parallelizing Fault Simulation}
 When parallelizing algorithms a lot has to be considered. Data dependencies is one aspect that leads to race conditions which in turn, leads to unpredictable code behaviour. In this case, the most important part of parallelizing the algorithm is to ensure that no data dependencies or race conditions would occur. In this case this was achieved easily by splitting the work in equal chunks to $N$ threads. Since each iteration is almost fully independent splitting the workflow to any number of threads was trivial once the serial algorithm was implemented. The workflow was split as follows: Each thread got a subset of the test vectors, then independently worked on identifying all faults that were previously generated with the checkpoint theorem and stored in a global variable. When using fault dropping threads that detect faults need to modify the global variable (that stores faults) in order to save time for other threads. To ensure that threads would not interfere with one another the global data structure was protected with a mutex since it was part of a critical region, but this was only a problem when using fault dropping. Without fault dropping each thread can work fully independent from any other one.
 
+
 \clearpage 
 
 \section*{Results}
+
+\begin{center}
+\begin{tabular}{||c c c c c c c c c c c c c c||}
+\hline
+Circuit & Time (s) & NAND & AND & NOR & NOT & BUFF & PI & PO & Paths & KB & FC(\%) & FD & Thr \\ [0.5ex] 
+\hline\hline
+ s27 & 0.039397 & 1  & 1  & 4  & 2  & 0  & 7  & 4  & 28  & 5  & 87.50 & NO  & 1 \\ 
+\hline
+ s386 & 19.309 & 0  & 83  & 0  & 41  & 0  & 13  & 13  & 207  & 77  & 25.99 & NO  & 1 \\ 
+\hline
+ s510 & 29.0381 & 61  & 34  & 55  & 32  & 0  & 25  & 13  & 369  & 100  & 88.96 & NO  & 1 \\ 
+\hline
+ s641 & 12.1184 & 4  & 90  & 0  & 272  & 0  & 54  & 42  & 1722  & 130  & 62.21 & NO  & 1 \\ 
+\hline
+ s838.1 & 119.061 & 57  & 105  & 70  & 158  & 0  & 66  & 33  & 1714  & 186  & 32.52 & NO  & 1 \\ 
+\hline
+ s298 & 4.39629 & 9  & 31  & 19  & 44  & 0  & 17  & 20  & 231  & 61  & 74.02 & NO  & 1 \\ 
+\hline
+ s382 & 7.73152 & 30  & 11  & 34  & 59  & 0  & 24  & 27  & 400  & 78  & 72.77 & NO  & 1 \\ 
+\hline
+ s400 & 8.23622 & 36  & 11  & 34  & 56  & 0  & 24  & 27  & 448  & 82  & 66.60 & NO  & 1 \\ 
+\hline
+ s526 & 31.4806 & 22  & 56  & 35  & 52  & 0  & 24  & 27  & 410  & 106  & 57.81 & NO  & 1 \\ 
+\hline
+ s526 & 30.7058 & 22  & 56  & 35  & 52  & 0  & 24  & 27  & 410  & 106  & 64.11 & NO  & 1 \\ 
+\hline
+ s713 & 17.0074 & 28  & 94  & 0  & 254  & 0  & 54  & 42  & 21812  & 145  & 61.72 & NO  & 1 \\ 
+\hline
+ s344 & 2.49331 & 18  & 44  & 30  & 59  & 0  & 24  & 17  & 344  & 65  & 70.18 & NO  & 1 \\ 
+\hline
+ s344.1 & 2.48867 & 18  & 44  & 30  & 59  & 0  & 24  & 17  & 344  & 65  & 70.18 & NO  & 1 \\ 
+\hline
+ s420.1 & 16.4326 & 29  & 49  & 34  & 78  & 0  & 34  & 17  & 474  & 91  & 41.67 & NO  & 1 \\ 
+\hline
+ s820 & 140.598 & 54  & 76  & 66  & 33  & 0  & 23  & 24  & 492  & 163  & 42.18 & NO  & 1 \\ 
+\hline
+ s953 & 145.275 & 114  & 49  & 112  & 84  & 0  & 45  & 52  & 1156  & 193  & 57.80 & NO  & 1 \\ 
+\hline
+ s208.1 & 2.91282 & 15  & 21  & 16  & 38  & 0  & 18  & 9  & 142  & 43  & 58.33 & NO  & 1 \\ 
+\hline
+ s349 & 2.62079 & 19  & 44  & 31  & 57  & 0  & 24  & 17  & 354  & 66  & 72.35 & NO  & 1 \\ 
+\hline
+ s444 & 9.9534 & 58  & 13  & 34  & 62  & 0  & 24  & 27  & 535  & 90  & 68.44 & NO  & 1 \\ 
+\hline
+\end{tabular}
+\end{center}
+
 
 \end{document}

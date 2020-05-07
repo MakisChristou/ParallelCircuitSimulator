@@ -1802,11 +1802,10 @@ int main(int argc, char *argv[]){
 		std::string Mode = "";
 
 		if(threads == -2){
-			Mode = " Mode:SERIAL";
-		}else{
-			Mode = " Mode:Parallel";
+			Mode = " Thr:1";
+		}else if(threads > -2){
+			Mode = " Thr:"+std::to_string(threads);
 		}
-
 		std::stringstream stream;
 		stream << std::fixed << std::setprecision(2) << fault_coverage;
 		std::string s = stream.str();
