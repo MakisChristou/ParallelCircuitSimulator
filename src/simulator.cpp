@@ -56,7 +56,6 @@ bool print_graphviz = false;
 bool percentage_bar = false;
 int threads = -2;
 bool fault_dropping = false;
-int circuit_faults;
 
 //For Parallel Simulation
 std::set<std::pair<int,int>> Global_Faults_Set;
@@ -509,12 +508,6 @@ int getGraphSize(std::vector<std::vector<int>>& adj, std::vector <struct VertexD
 			return ((sizeof(int) * counter) + (sizeof(struct VertexData) * Vertices_Vector.size())); 	
 }
 
-//Helper Function, return coverage percentage
-float getFaultCoverage(int circuit_faults,int faults_set_size){
-
-		return (float)(faults_set_size)/(circuit_faults)*100; 
-}
-
 //Returns the netlist's paths
 int countPaths(std::vector <struct VertexData> Vertices_Vector){ 
 
@@ -778,7 +771,7 @@ std::vector<int> evaluate(std::vector<std::vector<int>> adj, std::vector <struct
 }
 
 //Progress bar for simulation
-void progressSim(unsigned long long i, unsigned long long N, Timer timer, bool multithreaded, unsigned long long n, float FC){
+void progressSim(unsigned long long i, unsigned long long N, Timer timer, bool multithreaded, unsigned long long n){
 
 
 			std::chrono::duration<float> duration = timer.duration;
@@ -818,22 +811,22 @@ void progressSim(unsigned long long i, unsigned long long N, Timer timer, bool m
 					std::string padding = "                   ";
 
 					if(done_in_s < 180)
-						std::cout << "\r" << "[" << (unsigned long long)time<< " P/s]"<< "[total "<<i << "]"<< "[" << percentage << "% done][100% in " << done_in_s << " sec]" << "[FC: "<< FC << "]"<< padding <<std::flush;
+						std::cout << "\r" << "[" << (unsigned long long)time<< " P/s]"<< "[total "<<i << "]"<< "[" << percentage << "% done][100% in " << done_in_s << " sec]"<< padding <<std::flush;
 
 					else if(done_in_m < 180)
-						std::cout << "\r" << "[" << (unsigned long long)time<< " P/s]"<< "[total "<<i << "]"<< "[" << percentage << "% done][100% in " << done_in_m << " min]"<< "[FC: "<< FC << "]" <<padding <<std::flush;
+						std::cout << "\r" << "[" << (unsigned long long)time<< " P/s]"<< "[total "<<i << "]"<< "[" << percentage << "% done][100% in " << done_in_m << " min]"<< padding <<std::flush;
 
 					else if(done_in_h < 48)
-						std::cout << "\r" << "[" << (unsigned long long)time<< " P/s]"<< "[total "<<i << "]"<< "[" << percentage << "% done][100% in " << done_in_h << " hours]"<< "[FC: "<< FC << "]"<< padding <<std::flush;
+						std::cout << "\r" << "[" << (unsigned long long)time<< " P/s]"<< "[total "<<i << "]"<< "[" << percentage << "% done][100% in " << done_in_h << " hours]"<< padding <<std::flush;
 
 					else if(done_in_d < 90)
-						std::cout << "\r" << "[" << (unsigned long long)time<< " P/s]"<< "[total "<<i << "]"<< "[" << percentage << "% done][100% in " << done_in_d << " days]"<< "[FC: "<< FC << "]"<< padding <<std::flush;
+						std::cout << "\r" << "[" << (unsigned long long)time<< " P/s]"<< "[total "<<i << "]"<< "[" << percentage << "% done][100% in " << done_in_d << " days]"<< padding <<std::flush;
 
 					else if(done_in_mon < 24)
-						std::cout << "\r" << "[" << (unsigned long long)time<< " P/s]"<< "[total "<<i << "]"<< "[" << percentage << "% done][100% in " << done_in_mon << " months]"<< "[FC: "<< FC << "]"<< padding <<std::flush;
+						std::cout << "\r" << "[" << (unsigned long long)time<< " P/s]"<< "[total "<<i << "]"<< "[" << percentage << "% done][100% in " << done_in_mon << " months]"<< padding <<std::flush;
 
 					else
-						std::cout << "\r" << "[" << (unsigned long long)time<< " P/s]"<< "[total "<<i << "]"<< "[" << percentage << "% done][100% in " << done_in_y << " years]"<< "[FC: "<< FC << "]"<< padding << std::flush;
+						std::cout << "\r" << "[" << (unsigned long long)time<< " P/s]"<< "[total "<<i << "]"<< "[" << percentage << "% done][100% in " << done_in_y << " years]"<< padding << std::flush;
 
 				}
 			}
@@ -938,10 +931,8 @@ void doWork(unsigned long long start, unsigned long long end, std::vector<std::v
 						// For progress bar	
 						int F = (end-start)*Global_Faults_Vector.size();
 //					std::cout << "Itteration  "<< (*it).first << " - " << (*it).second << "\n";
-						float fault_coverage = getFaultCoverage(circuit_faults,Global_Faults_Set.size());
-
 						//Pretty Printing (inaccurate)
-						progressSim(j,F,timer,true,n,fault_coverage);
+						progressSim(j,F,timer,true,n);
 					}
 					j++;	
 			}
@@ -971,6 +962,11 @@ void printFaultStats(int circuit_faults, int faults_set_size){
 
 }
 
+//Helper Function, return coverage percentage
+float getFaultCoverage(int circuit_faults,int faults_set_size){
+
+		return (float)(faults_set_size)/(circuit_faults)*100; 
+}
 
 //Main Function
 int main(int argc, char *argv[]){
@@ -1689,7 +1685,7 @@ int main(int argc, char *argv[]){
 	Global_Faults_Vector = Faults_Vector;
 
 
-	circuit_faults = checkpoint_fault_sites * 2;
+	int circuit_faults = checkpoint_fault_sites * 2;
 
 	//Faults that Test Vectors are able to detect
 	//First = id of gate's output that is stuck at either 0 or 1	
@@ -1779,11 +1775,9 @@ int main(int argc, char *argv[]){
 					if(percentage_bar){	
 						// For progress bar	
 						int F = N * circuit_faults;
-						
-						float fault_coverage = getFaultCoverage(circuit_faults, Faults_Set.size());
 
 						//Pretty Printing (inaccurate)
-						progressSim(j,F,timer,false,0,fault_coverage);
+						progressSim(j,F,timer,false,0);
 					}
 					j++;	
 
