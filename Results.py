@@ -28,7 +28,7 @@ coverage = []
 dropping = []
 parallel = []
 
-filename = "Results"
+filename = "Results" # change to Netlist_Stats and see Table1.tex 
 
 
 with open(filename) as f:
@@ -193,7 +193,7 @@ for i in content:
 
 file= open("Table.md","w") 
 
-file.write("| Circuit | Time (s) | Lines | # of Nand | # of And | #of Nor | # of Not | # of Buff | # of Inputs | # of Outputs |# Paths | Graph Size (KB) | Coverage | Dropping | Mode | \n")
+file.write("| Circuit | Time | Lines | NAND | AND | NOR | NOT | BUFF | PI | PO |Paths | (KB) | FC | FD | Threads | \n")
 file.write("| ------------- |-------------| ------------- |-------------| ------------- |-------------|------------- |-------------|------------- |-------------- |------------|-------------|-------------- |------------|-------------|\n")
 
 
@@ -205,8 +205,8 @@ for f, b,lin,na,a,nr,nt,bf,inp,out,pth,kk,cov,mode,par in zip(circuits, y,lines,
 # Write Latex Matrix
 
 file= open("Table.tex","w") 
-file.write("\begin{center}\n")
-file.write("\begin{tabular}{||c c c c c c c c c c c c c c||}\n")
+file.write("begin{center}\n")
+file.write("begin{tabular}{||c c c c c c c c c c c c c c||}\n")
 file.write("\hline\n")
 file.write("Circuit & Time (s) & NAND & AND & NOR & NOT & BUFF & PI & PO & Paths & KB & FC(\%) & FD & Thr \\\ [0.5ex] \n")
 file.write("\hline\hline\n")
@@ -221,7 +221,59 @@ for f, b,lin,na,a,nr,nt,bf,inp,out,pth,kk,cov,mode,par in zip(circuits, y,lines,
 file.write("\end{tabular}\n")
 file.write("\end{center}\n")
 
+
+
 #########################################################
+
+# Write Latex Matrix
+
+file= open("Table1.tex","w") 
+file.write("begin{center}\n")
+file.write("begin{tabular}{||c c c c c c c c c c||}\n")
+file.write("\hline\n")
+file.write("Circuit & NAND & AND & NOR & NOT & BUFF & PI & PO & Paths & KB  \\\ [0.5ex] \n")
+file.write("\hline\hline\n")
+
+
+for f, b,lin,na,a,nr,nt,bf,inp,out,pth,kk,cov,mode,par in zip(circuits, y,lines,nand,andd,nor,nott,buff,inputt,output,paths,kbb,coverage,dropping,parallel):
+        #print(f, b)
+        file.write(" " + f + "" + " & "+ ""+str(na)+" & "+str(a)+" & "+str(nr)+" & "+str(nt)+" & "+str(bf)+" & " + str(inp) +" & " + str(out) +" & "+str(pth) + " & " + str(kk) + "" +"" " \\\ \n")
+        file.write("\hline\n")
+
+
+file.write("\end{tabular}\n")
+file.write("\end{center}\n")
+
+
+
+#########################################################
+# Write Latex Matrix
+
+file= open("Table2.tex","w") 
+file.write("begin{center}\n")
+file.write("begin{tabular}{||c c c c c||}\n")
+file.write("\hline\n")
+file.write("Circuit & Time (s) & FC(\%) & FD & Thr \\\ [0.5ex] \n")
+file.write("\hline\hline\n")
+
+
+for f, b,lin,na,a,nr,nt,bf,inp,out,pth,kk,cov,mode,par in zip(circuits, y,lines,nand,andd,nor,nott,buff,inputt,output,paths,kbb,coverage,dropping,parallel):
+        #print(f, b)
+        file.write(" " + f + " & " + str(b) +  " & "+ cov[:-2] + "\%" + " & " + mode + " & " + par + " \\\ \n")
+        file.write("\hline\n")
+
+
+file.write("\end{tabular}\n")
+file.write("\end{center}\n")
+
+
+
+#########################################################
+
+
+
+import sys
+sys.exit(1) # Or something that calls sys.exit().
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -250,8 +302,6 @@ plt.show()
 
 
 
-import sys
-sys.exit(1) # Or something that calls sys.exit().
 
 x = range(len(circuits))
 pylab.xticks(x, circuits)

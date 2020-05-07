@@ -1,7 +1,7 @@
 #------------------------------------------------------------------------------
 SOURCE=./src/simulator.cpp
 MYPROGRAM=simulator
-LIBS= -lncurses -std=c++11 -pthread -fopenmp
+LIBS= -std=c++11 -pthread
 CC=g++
 
 #------------------------------------------------------------------------------
@@ -14,7 +14,7 @@ all: $(MYPROGRAM)
 
 $(MYPROGRAM): $(SOURCE)
 
-	$(CC) $(SOURCE) -o$(MYPROGRAM) $(LIBS)
+	$(CC)  $(SOURCE) -o$(MYPROGRAM) $(LIBS) -static
 
 clean:
 
