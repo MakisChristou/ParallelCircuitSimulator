@@ -560,7 +560,23 @@ int evaluateGate(std::vector<int> input_vector,std::string component_name){
 
 
 	if(component_name == "NAND"){
-				output = 0;	
+		
+		output = 0;	
+
+		if(std::find(input_vector.begin(), input_vector.end(), 0) != input_vector.end())
+		{
+    	return 1;
+		}
+		else if(std::find(input_vector.begin(), input_vector.end(), 2) != input_vector.end())
+		{
+			return 2;
+		}
+		else
+		{
+			return 0;
+		}
+
+		//Old Code
 				for(auto& in : input_vector){
 					if(in == 0){
 						output = 1;	
@@ -571,7 +587,20 @@ int evaluateGate(std::vector<int> input_vector,std::string component_name){
 	}
 
 	else if(component_name == "AND"){
-				
+
+		if(std::find(input_vector.begin(), input_vector.end(), 0) != input_vector.end())
+		{
+    	return 0;
+		}
+		else if(std::find(input_vector.begin(), input_vector.end(), 2) != input_vector.end())
+		{
+			return 2;
+		}
+		else
+		{
+			return 1;
+		}
+
 				output = 1;	
 				for(auto& in : input_vector){
 					if(in == 0){
@@ -583,6 +612,22 @@ int evaluateGate(std::vector<int> input_vector,std::string component_name){
 	}
 
 	else if(component_name == "OR"){
+
+		if(std::find(input_vector.begin(), input_vector.end(), 1) != input_vector.end())
+		{
+    	return 1;
+		}
+		else if(std::find(input_vector.begin(), input_vector.end(), 2) != input_vector.end())
+		{
+			return 2;
+		}
+		else
+		{
+			return 0;
+		}
+
+
+
 				output = 0;	
 				for(auto& in : input_vector){
 					if(in == 1){
@@ -593,6 +638,21 @@ int evaluateGate(std::vector<int> input_vector,std::string component_name){
 	}
 
 	else if(component_name == "NOR"){
+
+		if(std::find(input_vector.begin(), input_vector.end(), 1) != input_vector.end())
+		{
+    	return 0;
+		}
+		else if(std::find(input_vector.begin(), input_vector.end(), 2) != input_vector.end())
+		{
+			return 2;
+		}
+		else
+		{
+			return 1;
+		}
+
+
 				output = 1;	
 				for(auto& in : input_vector){
 					if(in == 1){
@@ -614,6 +674,8 @@ int evaluateGate(std::vector<int> input_vector,std::string component_name){
 			output = 1;
 		if(input_vector[0] == 1)
 			output = 0;
+		if(input_vector[0] == 2)
+			output = 2;
 
 	}
 
@@ -817,9 +879,10 @@ void doWork(unsigned long long start, unsigned long long end, std::vector<std::v
 					input_vector.push_back(1);
 				}
 				else if(pattern[i] == '2'){
+					input_vector.push_back(2);
 					//Don't care
-					std::cout << "Encountered a Don't Care\n";
-					return ;
+					//std::cout << "Encountered a Don't Care\n";
+					//return ;
 				}
 			}
 			
@@ -1515,7 +1578,7 @@ int main(int argc, char *argv[]){
 						{
 							std::string fixed_line = line.substr(3,line.size());
 
-							std::cout << fixed_line << std::endl;
+//							std::cout << fixed_line << std::endl;
 
 							Tests1.push_back(fixed_line);
 						}	
@@ -1536,7 +1599,7 @@ int main(int argc, char *argv[]){
 								std::size_t found = fixed_line.find_last_of(":");
 								std::string test =  fixed_line.substr(found+2);
 
-								std::cout << test << std::endl;
+//								std::cout << test << std::endl;
 
 								Tests1.push_back(test);
 							}
@@ -1661,9 +1724,10 @@ int main(int argc, char *argv[]){
 						input_vector.push_back(1);
 					}
 					else if(pattern[i] == '2'){
+						input_vector.push_back(2);
 						//Don't care
-						std::cout << "Encountered a Don't Care\n";
-						return -1;
+						//std::cout << "Encountered a Don't Care\n";
+						//return -1;
 					}
 				}
 			
@@ -1756,8 +1820,8 @@ int main(int argc, char *argv[]){
 		std::vector <std::pair<unsigned long long , unsigned long long>> Range_Vector;
 
 		//Split work "equally" for N threads
-		for(int i = 1; i<(n+1); i++){
-			
+		for(int i = 1; i<(n+1); i++)
+		{		
 			if(i == n){
 				end_range = N-1;
 			}
@@ -1777,7 +1841,8 @@ int main(int argc, char *argv[]){
 		std::vector <std::thread> Thread_Vector;
 	
 		//Start n threads
-		for(unsigned long long i = 0; i < n; i++){		
+		for(unsigned long long i = 0; i < n; i++)
+		{		
 			//Special thread ;)
 			if(i == n-1){
 				Thread_Vector.emplace_back(doWork,Range_Vector[i].first,Range_Vector[i].second, adj, Vertices_Vector, Sorted, Tests, true, n, fault_dropping, percentage_bar);
@@ -1792,7 +1857,8 @@ int main(int argc, char *argv[]){
 		
 
 		//Wait for all threads to finish
-		for(auto& t : Thread_Vector){		
+		for(auto& t : Thread_Vector)
+		{		
 			t.join();	
 		}
 
