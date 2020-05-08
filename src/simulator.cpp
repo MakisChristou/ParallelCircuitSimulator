@@ -56,6 +56,8 @@ bool print_graphviz = false;
 bool percentage_bar = false;
 int threads = -2;
 bool fault_dropping = false;
+bool gentest = false;
+
 
 //For Parallel Simulation
 std::set<std::pair<int,int>> Global_Faults_Set;
@@ -968,6 +970,35 @@ float getFaultCoverage(int circuit_faults,int faults_set_size){
 		return (float)(faults_set_size)/(circuit_faults)*100; 
 }
 
+//Generate random test patterns for no apparent reason
+void generateRandomTests(std::string fileName, int numOfInputs)
+{
+				std::string inputVector = "";
+
+
+		std::ofstream myfile1;
+		myfile1.open (fileName+".txt");
+
+    for (int i = 0; i < 10000; i++)
+    {
+        for (int j = 0; j < numOfInputs; j++)
+        {
+            float p = rand() % 100 + 1;
+            if (p < 50)
+            {
+                inputVector += '1';
+            }
+            else
+            {
+                inputVector += '0';
+            }
+        }
+        myfile1 << inputVector << "\n";
+        inputVector = "";
+    }
+		myfile1.close();    
+}
+
 //Main Function
 int main(int argc, char *argv[]){
 	
@@ -1080,6 +1111,11 @@ int main(int argc, char *argv[]){
 			//Percentage Bar
 			else if((std::string)argv[i] == "-B" && argument_flag == true){
 				percentage_bar = true;
+			}
+
+			//Generate Random vectors
+			else if((std::string)argv[i] == "-V" && argument_flag == true){
+				gentest = true;
 			}
 
 			//Threads argument
@@ -1550,6 +1586,20 @@ int main(int argc, char *argv[]){
 	//Print the whole graph
 	printGraph1(adj);
 	#endif
+
+
+
+	if(gentest){
+		
+		std::size_t found = file_path.find_last_of("/\\");
+		std::string test=  file_path.substr(found+1);
+
+		std::size_t found1 = test.find_last_of(".");
+		std::string test1 =  test.substr(0,found1);
+
+		generateRandomTests(test1+"_rand",INPUT);
+		return 0;
+	}
 
 
 	#ifdef PARTB // Part B starts here
