@@ -1,9 +1,6 @@
 #!/bin/bash
 
 threads="-B -V" # This skips fault simulation
-Results="Netlist_Stats"
-
-rm $Results
 
 # ISCAS 89 (Count Paths and Netlist Starts only)
 ./simulator -C ISCAS/iscas89/s27.bench -I TESTS/iscas89/test\ suite\ 1/s27.vec -T s -S -P $threads -D 
