@@ -45,16 +45,16 @@ Results="Results"
 
 #TS2
 ./simulator -C ISCAS/iscas89/s344.bench -I TESTS/iscas89/test\ suite\ 2/s344.tests.comp.10 -T s -S $FD $MODE >> $Results
-./simulator -C ISCAS/iscas89/s344.1.bench -I TESTS/iscas89/test\ suite\ 2/s344.test.comp.10 -T s -S $FD $MODE >> $Results
-./simulator -C ISCAS/iscas89/s386.bench -I TESTS/iscas89/test\ suite\ 2/s386.test.comp.10 -T s -S $FD $MODE >> $Results
-./simulator -C ISCAS/iscas89/s510.bench -I TESTS/iscas89/test\ suite\ 2/s510.test.comp.10 -T s -S $FD $MODE >> $Results
-./simulator -C ISCAS/iscas89/s526.bench -I TESTS/iscas89/test\ suite\ 2/s526.test.comp.10 -T s -S $FD $MODE >> $Results
-./simulator -C ISCAS/iscas89/s641.bench -I TESTS/iscas89/test\ suite\ 2/s641.test.comp.10 -T s -S $FD $MODE >> $Results
-./simulator -C ISCAS/iscas89/s820.bench -I TESTS/iscas89/test\ suite\ 2/s820.test.comp.10 -T s -S $FD $MODE >> $Results
-./simulator -C ISCAS/iscas89/s953.bench -I TESTS/iscas89/test\ suite\ 2/s953.test.comp.10 -T s -S $FD $MODE >> $Results
-./simulator -C ISCAS/iscas89/s1196.bench -I TESTS/iscas89/test\ suite\ 2/s1196.test.comp.10 -T s -S $FD $MODE >> $Results
-./simulator -C ISCAS/iscas89/s1423.bench -I TESTS/iscas89/test\ suite\ 2/s1423.test.comp.10 -T s -S $FD $MODE >> $Results
-./simulator -C ISCAS/iscas89/s1488.bench -I TESTS/iscas89/test\ suite\ 2/s1488.test.comp.10 -T s -S $FD $MODE >> $Results
+./simulator -C ISCAS/iscas89/s344.1.bench -I TESTS/iscas89/test\ suite\ 2/s344.tests.comp.10 -T s -S $FD $MODE >> $Results
+./simulator -C ISCAS/iscas89/s386.bench -I TESTS/iscas89/test\ suite\ 2/s386.tests.comp.10 -T s -S $FD $MODE >> $Results
+./simulator -C ISCAS/iscas89/s510.bench -I TESTS/iscas89/test\ suite\ 2/s510.tests.comp.10 -T s -S $FD $MODE >> $Results
+./simulator -C ISCAS/iscas89/s526.bench -I TESTS/iscas89/test\ suite\ 2/s526.tests.comp.10 -T s -S $FD $MODE >> $Results
+./simulator -C ISCAS/iscas89/s641.bench -I TESTS/iscas89/test\ suite\ 2/s641.tests.comp.10 -T s -S $FD $MODE >> $Results
+./simulator -C ISCAS/iscas89/s820.bench -I TESTS/iscas89/test\ suite\ 2/s820.tests.comp.10 -T s -S $FD $MODE >> $Results
+./simulator -C ISCAS/iscas89/s953.bench -I TESTS/iscas89/test\ suite\ 2/s953.tests.comp.10 -T s -S $FD $MODE >> $Results
+./simulator -C ISCAS/iscas89/s1196.bench -I TESTS/iscas89/test\ suite\ 2/s1196.tests.comp.10 -T s -S $FD $MODE >> $Results
+./simulator -C ISCAS/iscas89/s1423.bench -I TESTS/iscas89/test\ suite\ 2/s1423.tests.comp.10 -T s -S $FD $MODE >> $Results
+./simulator -C ISCAS/iscas89/s1488.bench -I TESTS/iscas89/test\ suite\ 2/s1488.tests.comp.10 -T s -S $FD $MODE >> $Results
 
 #TS3
 ./simulator -C ISCAS/iscas89/s344.1.bench -I TESTS/iscas89/test\ suite\ 3/s344.benchtest.in -T s -S $FD $MODE >> $Results

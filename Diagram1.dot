@@ -1,0 +1,60 @@
+digraph {
+		graph [splines=ortho, nodesep=0.8];
+    //start[shape="box", style=rounded];
+    //end[shape="box", style=rounded];
+    //if_valid[shape="diamond", style=""];
+    //message[shape="parallelogram", style=""]
+    //input[shape="parallelogram", style=""]
+		
+		 
+    //start -> input;
+    //input -> if_valid;
+    //if_valid -> message[label="no"];
+    //if_valid -> end[label="yes"];
+    //message -> input;
+
+		a0 [label="Start",shape="box",style=rounded]
+		a1 [label="End",shape="box",style=rounded]
+		a2 [label="Read bench",shape="parallelogram"]
+		a21 [label="Read input",shape="parallelogram"]
+		a22 [label="Valid",shape="diamond"]
+		a3 [label="Parse Files",shape="box"]
+		a4 [label="Construct G1,G2",shape="box"]
+		a5 [label="Topological Sort",shape="box"]
+		a6 [label="Generate fault list",shape="box"]
+		a7 [label="Serial Simulation",shape="box"]
+		a8 [label="Serial Simulation (FD)",shape="box"]
+		a9 [label="Parallel Simulation",shape="box"]
+		a10 [label="Parallel Simulation (FD)",shape="box"]
+		a11 [label="Save Results",shape="parallelogram"]
+		a12 [label="Finished",shape="diamond"]
+	
+
+
+
+
+	a0 -> a2;
+	a2 -> a21;
+	a21 -> a22;
+	a22 -> a1 [label= "No"];
+	a22 -> a3 [label ="Yes"];
+	a3 -> a4;
+	a4 -> a5;
+	a5 -> a6;
+	a6 -> a7;
+	a7 -> a8;
+	a8 -> a9;
+	a9 -> a10;
+	a10 -> a11;
+	a11 -> a12;
+	a12 -> a1[label = "Yes"];
+	a12 -> a2 [label = "No"];
+	
+	
+
+	
+	
+
+
+
+}

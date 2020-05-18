@@ -1,0 +1,527 @@
+begin{center}
+begin{tabular}{||c c c||}
+\hline
+Circuit Name & Fault Coverage (\%) & Test Set \\ [0.5ex] 
+\hline\hline
+ s27 & 87.50 \% & s27.vec \\ 
+\hline
+ s386 & 25.99 \% & s386.vec \\ 
+\hline
+ s510 & 88.96 \% & s510.vec \\ 
+\hline
+ s641 & 62.21 \% & s641.vec \\ 
+\hline
+ s838.1 & 32.52 \% & s838.vec \\ 
+\hline
+ s298 & 74.02 \% & s298.vec \\ 
+\hline
+ s382 & 72.77 \% & s382.vec \\ 
+\hline
+ s400 & 66.60 \% & s400.vec \\ 
+\hline
+ s526 & 57.81 \% & s526n.vec \\ 
+\hline
+ s526 & 64.11 \% & s526.vec \\ 
+\hline
+ s713 & 61.72 \% & s713.vec \\ 
+\hline
+ s344 & 70.18 \% & s344.vec \\ 
+\hline
+ s344.1 & 70.18 \% & s344.vec \\ 
+\hline
+ s420.1 & 41.67 \% & s420.vec \\ 
+\hline
+ s820 & 42.18 \% & s820.vec \\ 
+\hline
+ s953 & 57.80 \% & s953.vec \\ 
+\hline
+ s208.1 & 58.33 \% & s208.vec \\ 
+\hline
+ s349 & 72.35 \% & s349.vec \\ 
+\hline
+ s444 & 68.44 \% & s444.vec \\ 
+\hline
+ s1238 & 57.88 \% & s1238.vec \\ 
+\hline
+ s1494 & 64.23 \% & s1494.vec \\ 
+\hline
+ s5378 & 74.66 \% & s5378.vec \\ 
+\hline
+ s832 & 43.30 \% & s832.vec \\ 
+\hline
+ s1423 & 65.60 \% & s1423.vec \\ 
+\hline
+ s1196.1 & 63.87 \% & s1196.vec \\ 
+\hline
+ s1488 & 66.35 \% & s1488.vec \\ 
+\hline
+ s344 & 100.00 \% & s344.tests.comp.10 \\ 
+\hline
+ s344.1 & 100.00 \% & s344.tests.comp.10 \\ 
+\hline
+ s386 & 100.00 \% & s386.tests.comp.10 \\ 
+\hline
+ s510 & 100.00 \% & s510.tests.comp.10 \\ 
+\hline
+ s526 & 99.85 \% & s526.tests.comp.10 \\ 
+\hline
+ s641 & 100.00 \% & s641.tests.comp.10 \\ 
+\hline
+ s820 & 100.00 \% & s820.tests.comp.10 \\ 
+\hline
+ s953 & 80.47 \% & s953.tests.comp.10 \\ 
+\hline
+ s1196 & 99.78 \% & s1196.tests.comp.10 \\ 
+\hline
+ s1423 & 98.76 \% & s1423.tests.comp.10 \\ 
+\hline
+ s1488 & 100.00 \% & s1488.tests.comp.10 \\ 
+\hline
+ s344.1 & 100.00 \% & s344.benchtest.in \\ 
+\hline
+ s344 & 100.00 \% & s344.benchtest.in \\ 
+\hline
+ s382 & 100.00 \% & s382.benchtest.in \\ 
+\hline
+ s510 & 100.00 \% & s510.benchtest.in \\ 
+\hline
+ s526 & 99.85 \% & s526.benchtest.in \\ 
+\hline
+ s641 & 100.00 \% & s641.benchtest.in \\ 
+\hline
+ s820 & 100.00 \% & s820.benchtest.in \\ 
+\hline
+ s953 & 74.19 \% & s953.benchtest.in \\ 
+\hline
+ s1196 & 99.78 \% & s1196.benchtest.in \\ 
+\hline
+ s1423 & 98.89 \% & s1423.benchtest.in \\ 
+\hline
+ s1488 & 100.00 \% & s1488.benchtest.in \\ 
+\hline
+ c17 & 100.00 \% & c17.txt \\ 
+\hline
+ c880 & 100.00 \% & c880.txt \\ 
+\hline
+ c1355 & 97.53 \% & c1355.txt \\ 
+\hline
+ c1908 & 99.71 \% & c1908.txt \\ 
+\hline
+ c2670 & 96.03 \% & c2670.txt \\ 
+\hline
+ c3540 & 96.01 \% & c3540.txt \\ 
+\hline
+ c6288 & 99.34 \% & c6288.txt \\ 
+\hline
+ c7552 & 98.38 \% & c7552.txt \\ 
+\hline
+ c17 & 100.00 \% & c17.vec \\ 
+\hline
+ c880 & 100.00 \% & c880.vec \\ 
+\hline
+ c1355 & 99.51 \% & c1355.vec \\ 
+\hline
+ c1908 & 72.27 \% & c1908.vec \\ 
+\hline
+ c2670 & 95.97 \% & c2670.vec \\ 
+\hline
+ c3540 & 81.58 \% & c3540.vec \\ 
+\hline
+ c5315 & 99.00 \% & c5315.vec \\ 
+\hline
+ c6288 & 99.34 \% & c6288.vec \\ 
+\hline
+ c7552 & 98.33 \% & c7552.vec \\ 
+\hline
+ s27 & 87.50 \% & s27.vec \\ 
+\hline
+ s386 & 25.99 \% & s386.vec \\ 
+\hline
+ s510 & 88.96 \% & s510.vec \\ 
+\hline
+ s641 & 62.21 \% & s641.vec \\ 
+\hline
+ s838.1 & 32.52 \% & s838.vec \\ 
+\hline
+ s298 & 74.02 \% & s298.vec \\ 
+\hline
+ s382 & 72.77 \% & s382.vec \\ 
+\hline
+ s400 & 66.60 \% & s400.vec \\ 
+\hline
+ s526 & 57.81 \% & s526n.vec \\ 
+\hline
+ s526 & 64.11 \% & s526.vec \\ 
+\hline
+ s713 & 61.72 \% & s713.vec \\ 
+\hline
+ s344 & 70.18 \% & s344.vec \\ 
+\hline
+ s344.1 & 70.18 \% & s344.vec \\ 
+\hline
+ s420.1 & 41.67 \% & s420.vec \\ 
+\hline
+ s820 & 42.18 \% & s820.vec \\ 
+\hline
+ s953 & 57.80 \% & s953.vec \\ 
+\hline
+ s208.1 & 58.33 \% & s208.vec \\ 
+\hline
+ s349 & 72.35 \% & s349.vec \\ 
+\hline
+ s444 & 68.44 \% & s444.vec \\ 
+\hline
+ s1238 & 57.88 \% & s1238.vec \\ 
+\hline
+ s1494 & 64.23 \% & s1494.vec \\ 
+\hline
+ s5378 & 74.66 \% & s5378.vec \\ 
+\hline
+ s832 & 43.30 \% & s832.vec \\ 
+\hline
+ s1423 & 65.60 \% & s1423.vec \\ 
+\hline
+ s1196.1 & 63.87 \% & s1196.vec \\ 
+\hline
+ s1488 & 66.35 \% & s1488.vec \\ 
+\hline
+ s344 & 100.00 \% & s344.tests.comp.10 \\ 
+\hline
+ s344.1 & 100.00 \% & s344.tests.comp.10 \\ 
+\hline
+ s386 & 100.00 \% & s386.tests.comp.10 \\ 
+\hline
+ s510 & 100.00 \% & s510.tests.comp.10 \\ 
+\hline
+ s526 & 99.85 \% & s526.tests.comp.10 \\ 
+\hline
+ s641 & 100.00 \% & s641.tests.comp.10 \\ 
+\hline
+ s820 & 100.00 \% & s820.tests.comp.10 \\ 
+\hline
+ s953 & 80.47 \% & s953.tests.comp.10 \\ 
+\hline
+ s1196 & 99.78 \% & s1196.tests.comp.10 \\ 
+\hline
+ s1423 & 98.76 \% & s1423.tests.comp.10 \\ 
+\hline
+ s1488 & 100.00 \% & s1488.tests.comp.10 \\ 
+\hline
+ s344.1 & 100.00 \% & s344.benchtest.in \\ 
+\hline
+ s344 & 100.00 \% & s344.benchtest.in \\ 
+\hline
+ s382 & 100.00 \% & s382.benchtest.in \\ 
+\hline
+ s510 & 100.00 \% & s510.benchtest.in \\ 
+\hline
+ s526 & 99.85 \% & s526.benchtest.in \\ 
+\hline
+ s641 & 100.00 \% & s641.benchtest.in \\ 
+\hline
+ s820 & 100.00 \% & s820.benchtest.in \\ 
+\hline
+ s953 & 74.19 \% & s953.benchtest.in \\ 
+\hline
+ s1196 & 99.78 \% & s1196.benchtest.in \\ 
+\hline
+ s1423 & 98.89 \% & s1423.benchtest.in \\ 
+\hline
+ s1488 & 100.00 \% & s1488.benchtest.in \\ 
+\hline
+ c17 & 100.00 \% & c17.txt \\ 
+\hline
+ c880 & 100.00 \% & c880.txt \\ 
+\hline
+ c1355 & 97.53 \% & c1355.txt \\ 
+\hline
+ c1908 & 99.71 \% & c1908.txt \\ 
+\hline
+ c2670 & 96.00 \% & c2670.txt \\ 
+\hline
+ c3540 & 96.01 \% & c3540.txt \\ 
+\hline
+ c6288 & 99.34 \% & c6288.txt \\ 
+\hline
+ c7552 & 98.38 \% & c7552.txt \\ 
+\hline
+ c17 & 100.00 \% & c17.vec \\ 
+\hline
+ c880 & 100.00 \% & c880.vec \\ 
+\hline
+ c1355 & 99.51 \% & c1355.vec \\ 
+\hline
+ c1908 & 72.27 \% & c1908.vec \\ 
+\hline
+ c2670 & 95.97 \% & c2670.vec \\ 
+\hline
+ c3540 & 81.58 \% & c3540.vec \\ 
+\hline
+ c5315 & 99.00 \% & c5315.vec \\ 
+\hline
+ c6288 & 99.34 \% & c6288.vec \\ 
+\hline
+ c7552 & 98.33 \% & c7552.vec \\ 
+\hline
+ s27 & 87.50 \% & s27.vec \\ 
+\hline
+ s386 & 25.99 \% & s386.vec \\ 
+\hline
+ s510 & 88.96 \% & s510.vec \\ 
+\hline
+ s641 & 62.21 \% & s641.vec \\ 
+\hline
+ s838.1 & 32.52 \% & s838.vec \\ 
+\hline
+ s298 & 74.02 \% & s298.vec \\ 
+\hline
+ s382 & 72.77 \% & s382.vec \\ 
+\hline
+ s400 & 66.60 \% & s400.vec \\ 
+\hline
+ s526 & 57.81 \% & s526n.vec \\ 
+\hline
+ s526 & 64.11 \% & s526.vec \\ 
+\hline
+ s713 & 61.72 \% & s713.vec \\ 
+\hline
+ s344 & 70.18 \% & s344.vec \\ 
+\hline
+ s344.1 & 70.18 \% & s344.vec \\ 
+\hline
+ s420.1 & 41.67 \% & s420.vec \\ 
+\hline
+ s820 & 42.18 \% & s820.vec \\ 
+\hline
+ s953 & 57.80 \% & s953.vec \\ 
+\hline
+ s208.1 & 58.33 \% & s208.vec \\ 
+\hline
+ s349 & 72.35 \% & s349.vec \\ 
+\hline
+ s444 & 68.44 \% & s444.vec \\ 
+\hline
+ s1238 & 57.88 \% & s1238.vec \\ 
+\hline
+ s1494 & 64.23 \% & s1494.vec \\ 
+\hline
+ s5378 & 74.66 \% & s5378.vec \\ 
+\hline
+ s832 & 43.30 \% & s832.vec \\ 
+\hline
+ s1423 & 65.60 \% & s1423.vec \\ 
+\hline
+ s1196.1 & 63.87 \% & s1196.vec \\ 
+\hline
+ s1488 & 66.35 \% & s1488.vec \\ 
+\hline
+ s344 & 100.00 \% & s344.tests.comp.10 \\ 
+\hline
+ s344.1 & 100.00 \% & s344.tests.comp.10 \\ 
+\hline
+ s386 & 100.00 \% & s386.tests.comp.10 \\ 
+\hline
+ s510 & 100.00 \% & s510.tests.comp.10 \\ 
+\hline
+ s526 & 99.85 \% & s526.tests.comp.10 \\ 
+\hline
+ s641 & 100.00 \% & s641.tests.comp.10 \\ 
+\hline
+ s820 & 100.00 \% & s820.tests.comp.10 \\ 
+\hline
+ s953 & 80.47 \% & s953.tests.comp.10 \\ 
+\hline
+ s1196 & 99.78 \% & s1196.tests.comp.10 \\ 
+\hline
+ s1423 & 98.76 \% & s1423.tests.comp.10 \\ 
+\hline
+ s1488 & 100.00 \% & s1488.tests.comp.10 \\ 
+\hline
+ s344.1 & 100.00 \% & s344.benchtest.in \\ 
+\hline
+ s344 & 100.00 \% & s344.benchtest.in \\ 
+\hline
+ s382 & 100.00 \% & s382.benchtest.in \\ 
+\hline
+ s510 & 100.00 \% & s510.benchtest.in \\ 
+\hline
+ s526 & 99.85 \% & s526.benchtest.in \\ 
+\hline
+ s641 & 100.00 \% & s641.benchtest.in \\ 
+\hline
+ s820 & 100.00 \% & s820.benchtest.in \\ 
+\hline
+ s953 & 74.19 \% & s953.benchtest.in \\ 
+\hline
+ s1196 & 99.78 \% & s1196.benchtest.in \\ 
+\hline
+ s1423 & 98.89 \% & s1423.benchtest.in \\ 
+\hline
+ s1488 & 100.00 \% & s1488.benchtest.in \\ 
+\hline
+ c17 & 100.00 \% & c17.txt \\ 
+\hline
+ c880 & 100.00 \% & c880.txt \\ 
+\hline
+ c1355 & 97.53 \% & c1355.txt \\ 
+\hline
+ c1908 & 99.71 \% & c1908.txt \\ 
+\hline
+ c2670 & 96.03 \% & c2670.txt \\ 
+\hline
+ c3540 & 96.01 \% & c3540.txt \\ 
+\hline
+ c6288 & 99.34 \% & c6288.txt \\ 
+\hline
+ c7552 & 98.38 \% & c7552.txt \\ 
+\hline
+ c17 & 100.00 \% & c17.vec \\ 
+\hline
+ c880 & 100.00 \% & c880.vec \\ 
+\hline
+ c1355 & 99.51 \% & c1355.vec \\ 
+\hline
+ c1908 & 72.27 \% & c1908.vec \\ 
+\hline
+ c2670 & 95.97 \% & c2670.vec \\ 
+\hline
+ c3540 & 81.58 \% & c3540.vec \\ 
+\hline
+ c5315 & 99.00 \% & c5315.vec \\ 
+\hline
+ c6288 & 99.34 \% & c6288.vec \\ 
+\hline
+ c7552 & 98.33 \% & c7552.vec \\ 
+\hline
+ s27 & 87.50 \% & s27.vec \\ 
+\hline
+ s386 & 25.99 \% & s386.vec \\ 
+\hline
+ s510 & 88.96 \% & s510.vec \\ 
+\hline
+ s641 & 62.21 \% & s641.vec \\ 
+\hline
+ s838.1 & 32.52 \% & s838.vec \\ 
+\hline
+ s298 & 74.02 \% & s298.vec \\ 
+\hline
+ s382 & 72.77 \% & s382.vec \\ 
+\hline
+ s400 & 66.60 \% & s400.vec \\ 
+\hline
+ s526 & 57.81 \% & s526n.vec \\ 
+\hline
+ s526 & 64.11 \% & s526.vec \\ 
+\hline
+ s713 & 61.72 \% & s713.vec \\ 
+\hline
+ s344 & 70.18 \% & s344.vec \\ 
+\hline
+ s344.1 & 70.18 \% & s344.vec \\ 
+\hline
+ s420.1 & 41.67 \% & s420.vec \\ 
+\hline
+ s820 & 42.18 \% & s820.vec \\ 
+\hline
+ s953 & 57.80 \% & s953.vec \\ 
+\hline
+ s208.1 & 58.33 \% & s208.vec \\ 
+\hline
+ s349 & 72.35 \% & s349.vec \\ 
+\hline
+ s444 & 68.44 \% & s444.vec \\ 
+\hline
+ s1238 & 57.88 \% & s1238.vec \\ 
+\hline
+ s1494 & 64.23 \% & s1494.vec \\ 
+\hline
+ s5378 & 74.66 \% & s5378.vec \\ 
+\hline
+ s832 & 43.30 \% & s832.vec \\ 
+\hline
+ s1423 & 65.60 \% & s1423.vec \\ 
+\hline
+ s1196.1 & 63.87 \% & s1196.vec \\ 
+\hline
+ s1488 & 66.35 \% & s1488.vec \\ 
+\hline
+ s344 & 100.00 \% & s344.tests.comp.10 \\ 
+\hline
+ s344.1 & 100.00 \% & s344.tests.comp.10 \\ 
+\hline
+ s386 & 100.00 \% & s386.tests.comp.10 \\ 
+\hline
+ s510 & 100.00 \% & s510.tests.comp.10 \\ 
+\hline
+ s526 & 99.85 \% & s526.tests.comp.10 \\ 
+\hline
+ s641 & 100.00 \% & s641.tests.comp.10 \\ 
+\hline
+ s820 & 100.00 \% & s820.tests.comp.10 \\ 
+\hline
+ s953 & 80.47 \% & s953.tests.comp.10 \\ 
+\hline
+ s1196 & 99.78 \% & s1196.tests.comp.10 \\ 
+\hline
+ s1423 & 98.76 \% & s1423.tests.comp.10 \\ 
+\hline
+ s1488 & 100.00 \% & s1488.tests.comp.10 \\ 
+\hline
+ s344.1 & 100.00 \% & s344.benchtest.in \\ 
+\hline
+ s344 & 100.00 \% & s344.benchtest.in \\ 
+\hline
+ s382 & 100.00 \% & s382.benchtest.in \\ 
+\hline
+ s510 & 100.00 \% & s510.benchtest.in \\ 
+\hline
+ s526 & 99.85 \% & s526.benchtest.in \\ 
+\hline
+ s641 & 100.00 \% & s641.benchtest.in \\ 
+\hline
+ s820 & 100.00 \% & s820.benchtest.in \\ 
+\hline
+ s953 & 74.19 \% & s953.benchtest.in \\ 
+\hline
+ s1196 & 99.78 \% & s1196.benchtest.in \\ 
+\hline
+ s1423 & 98.89 \% & s1423.benchtest.in \\ 
+\hline
+ s1488 & 100.00 \% & s1488.benchtest.in \\ 
+\hline
+ c17 & 100.00 \% & c17.txt \\ 
+\hline
+ c880 & 100.00 \% & c880.txt \\ 
+\hline
+ c1355 & 97.53 \% & c1355.txt \\ 
+\hline
+ c1908 & 99.71 \% & c1908.txt \\ 
+\hline
+ c2670 & 96.03 \% & c2670.txt \\ 
+\hline
+ c3540 & 96.01 \% & c3540.txt \\ 
+\hline
+ c6288 & 99.34 \% & c6288.txt \\ 
+\hline
+ c7552 & 98.38 \% & c7552.txt \\ 
+\hline
+ c17 & 100.00 \% & c17.vec \\ 
+\hline
+ c880 & 100.00 \% & c880.vec \\ 
+\hline
+ c1355 & 99.51 \% & c1355.vec \\ 
+\hline
+ c1908 & 72.27 \% & c1908.vec \\ 
+\hline
+ c2670 & 95.97 \% & c2670.vec \\ 
+\hline
+ c3540 & 81.58 \% & c3540.vec \\ 
+\hline
+ c5315 & 99.00 \% & c5315.vec \\ 
+\hline
+ c6288 & 99.34 \% & c6288.vec \\ 
+\hline
+ c7552 & 98.33 \% & c7552.vec \\ 
+\hline
+\end{tabular}
+\end{center}

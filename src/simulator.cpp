@@ -57,7 +57,7 @@ bool percentage_bar = false;
 int threads = -2;
 bool fault_dropping = false;
 bool gentest = false;
-
+bool save_faults = false;
 
 //For Parallel Simulation
 std::set<std::pair<int,int>> Global_Faults_Set;
@@ -716,6 +716,15 @@ int evaluateGate(std::vector<int> input_vector,std::string component_name){
  return output;
 }			
 
+//Helper print function
+std::string printVector(std::vector<int> input_vector){	
+		std::string out = "";
+		for(auto& i : input_vector)
+				out = out + std::to_string(i);	
+
+		return out;
+}
+
 //Evaluate Netlist for a given Input Pattern
 std::vector<int> evaluate(std::vector<std::vector<int>> adj, std::vector <struct VertexData> Vertices_Vector, std::vector<int> Sorted, std::vector<int> input, bool faulty, std::pair<int,int> fault){ 
 
@@ -767,8 +776,14 @@ std::vector<int> evaluate(std::vector<std::vector<int>> adj, std::vector <struct
 
 		i++;
 	}
-
-
+	
+	/*
+	if(faulty)
+		std::cout << "  FAULTY  " << printVector(output) << std::endl;	
+	else
+		std::cout << "  NORMAL  " << printVector(output) << std::endl;	
+	
+	*/
 	return output;
 }
 
@@ -947,15 +962,6 @@ void doWork(unsigned long long start, unsigned long long end, std::vector<std::v
 }
 
 //Helper print function
-std::string printVector(std::vector<int> input_vector){	
-		std::string out = "";
-		for(auto& i : input_vector)
-				out = out + std::to_string(i);	
-
-		return out;
-}
-
-//Helper print function
 void printFaultStats(int circuit_faults, int faults_set_size){
 	
 	std::cout << "\n---- Fault Stats ----\n";
@@ -971,15 +977,14 @@ float getFaultCoverage(int circuit_faults,int faults_set_size){
 }
 
 //Generate random test patterns for no apparent reason
-void generateRandomTests(std::string fileName, int numOfInputs)
+void generateRandomTests(std::string fileName, int numOfInputs,int numOfTests)
 {
-				std::string inputVector = "";
-
+		std::string inputVector = "";
 
 		std::ofstream myfile1;
 		myfile1.open (fileName+".txt");
 
-    for (int i = 0; i < 10000; i++)
+    for (int i = 0; i < numOfTests; i++)
     {
         for (int j = 0; j < numOfInputs; j++)
         {
@@ -997,6 +1002,22 @@ void generateRandomTests(std::string fileName, int numOfInputs)
         inputVector = "";
     }
 		myfile1.close();    
+}
+
+//Save which test vectors detect which faults
+void saveFaults(std::vector<std::string> Saved_Test_Faults)
+{
+		std::ofstream myfile;
+		myfile.open ("detected_faults.txt");
+
+
+		for(auto& line : Saved_Test_Faults)
+		{
+			myfile << line << std::endl;
+		}
+
+		myfile.close();
+
 }
 
 //Main Function
@@ -1117,6 +1138,13 @@ int main(int argc, char *argv[]){
 			else if((std::string)argv[i] == "-V" && argument_flag == true){
 				gentest = true;
 			}
+
+			//Save which test vectors detect which faults
+			else if((std::string)argv[i] == "-H" && argument_flag == true){
+				save_faults = true;
+				fault_dropping = false;
+			}
+
 
 			//Threads argument
 			if((std::string)argv[i] == "-P"){
@@ -1588,7 +1616,7 @@ int main(int argc, char *argv[]){
 	#endif
 
 
-
+	//Generate random vectors
 	if(gentest){
 		
 		std::size_t found = file_path.find_last_of("/\\");
@@ -1596,8 +1624,9 @@ int main(int argc, char *argv[]){
 
 		std::size_t found1 = test.find_last_of(".");
 		std::string test1 =  test.substr(0,found1);
-
-		generateRandomTests(test1+"_rand",INPUT);
+		
+		int numOfTests = Tests.size();
+		generateRandomTests(test1+"",INPUT,numOfTests);
 		return 0;
 	}
 
@@ -1742,6 +1771,10 @@ int main(int argc, char *argv[]){
 	//Second = 1 or 0
 	std::set<std::pair<int,int>> Faults_Set;
 
+	//Vector that holds which test vector detected which fault
+	std::vector<std::string> Saved_Test_Faults;
+
+
 	//Serial Fault Simulation	
 	if(threads == -2){
 		//Single Threaded Simulation for input file
@@ -1800,10 +1833,24 @@ int main(int argc, char *argv[]){
 					//Measure time
 					Timer timer;			
 	
-					std::vector<int> faulty_output = evaluate(adj,Vertices_Vector,Sorted,input_vector,true,*it);			
+					std::vector<int> faulty_output = evaluate(adj,Vertices_Vector,Sorted,input_vector,true,(*it));			
+					#ifdef DEBUG 
+					std::cout << printVector(input_vector) << " "; 
+					std::cout << " " << printVector(faulty_output);
+					std::cout << " vs " << printVector(correct_output);
+					
+					if(faulty_output != correct_output)
+					{
+						std::cout << " != ";				
+					}else
+					{
+						std::cout << " == ";;				
+					}
+					#endif
 
 					if(faulty_output != correct_output){
-
+	
+						//#define DEBUG
 						#ifdef DEBUG
 							std::cout << "I CAN DETECT BUG WITH Input:" << printVector(input_vector) << " "; 
 							std::cout << "Correct Output:" << printVector(correct_output) << " ";
@@ -1811,6 +1858,15 @@ int main(int argc, char *argv[]){
 						#endif
 
 						Faults_Set.insert(*it);
+
+						//Save which test vector detected which fault
+						if(save_faults)
+						{
+							
+							std::string temp_line;
+							temp_line = printVector(input_vector) + "," + std::to_string((*it).first) + "," + std::to_string((*it).second);
+							Saved_Test_Faults.push_back(temp_line);	
+						}
 
 						if(fault_dropping){
 							it = Faults_Vector.erase(it);
@@ -1844,7 +1900,13 @@ int main(int argc, char *argv[]){
 
 	//Print Fault stats 
 	//printFaultStats(circuit_faults,Faults_Set.size());
-		
+
+	if(save_faults)
+	{
+		saveFaults(Saved_Test_Faults);
+	}
+
+
 	//Multithreaded Simulation
 	if(threads > -2 && test_given){
 		

@@ -6,6 +6,12 @@ A simple plot with a custom dashed line
 A Line object's ``set_dashes`` method allows you to specify dashes with
 a series of on/off lengths (in points).
 """
+
+class Graph1:
+    Cname: str
+    FC: float
+    
+
 import numpy as np
 import matplotlib.pyplot as plt
 import pylab
@@ -29,7 +35,7 @@ dropping = []
 parallel = []
 test = []
 
-filename = "Results" # change to Netlist_Stats and see Table1.tex 
+filename = "Rand_Results" # change to Netlist_Stats and see Table1.tex 
 
 
 with open(filename) as f:
@@ -41,6 +47,8 @@ for i in content:
 	
 	#  ignore empty lines
 	if i.strip():
+		
+		#print(i)
 
 		pos1 = i.rfind('/')
 		pos1 = pos1+1
@@ -169,7 +177,7 @@ for i in content:
 
 		temp_coverage = i[pos16:pos17]
 
-		coverage.append(temp_coverage)
+		coverage.append(float(temp_coverage[:-2]))
 
 		###############################
 
@@ -200,138 +208,128 @@ for i in content:
 
 
 
+#import sys
+#sys.exit(1) # Or something that calls sys.exit().
 
 
-# Write Markdown Matrix
-
-file= open("Table.md","w") 
-
-file.write("| Circuit | Time | Lines | NAND | AND | NOR | NOT | BUFF | PI | PO |Paths | (KB) | FC | FD | Threads | \n")
-file.write("| ------------- |-------------| ------------- |-------------| ------------- |-------------|------------- |-------------|------------- |-------------- |------------|-------------|-------------- |------------|-------------|\n")
-
-
-for f, b,lin,na,a,nr,nt,bf,inp,out,pth,kk,cov,mode,par in zip(circuits, y,lines,nand,andd,nor,nott,buff,inputt,output,paths,kbb,coverage,dropping,parallel):
-        #print(f, b)
-        file.write("| " + f + " | " + str(b) + " | "+str(lin)+" | "+str(na)+" | "+str(a)+" | "+str(nr)+" | "+str(nt)+" | "+str(bf)+" | " + str(inp) +" | " + str(out) +" | "+str(pth) + " | " + str(kk) + " | "+ cov + " | " + mode + " | " + par + " | \n")
-
-
-# Write Latex Matrix
-
-file= open("Table.tex","w") 
+# Netlist Stats (Needs Manual Modification)
+file= open("Netlist.tex","w") 
 file.write("begin{center}\n")
-file.write("begin{tabular}{||c c c c c c c c c c c c c c||}\n")
+file.write("begin{tabular}{||c c c c c c c c c c c||}\n")
 file.write("\hline\n")
-file.write("Circuit & Time (s) & NAND & AND & NOR & NOT & BUFF & PI & PO & Paths & KB & FC(\%) & FD & Thr \\\ [0.5ex] \n")
+file.write("Circuit & Nand & And & Nor & Or & Not & Buff & PI & PO & Paths & KB \\\ [0.5ex] \n")
 file.write("\hline\hline\n")
 
 
-for f, b,lin,na,a,nr,nt,bf,inp,out,pth,kk,cov,mode,par in zip(circuits, y,lines,nand,andd,nor,nott,buff,inputt,output,paths,kbb,coverage,dropping,parallel):
-        #print(f, b)
-        file.write(" " + f + " & " + str(b) + " & "+ ""+str(na)+" & "+str(a)+" & "+str(nr)+" & "+str(nt)+" & "+str(bf)+" & " + str(inp) +" & " + str(out) +" & "+str(pth) + " & " + str(kk) + " & "+ cov[:-2] + "\%" + " & " + mode + " & " + par + " \\\ \n")
-        file.write("\hline\n")
+for name,time,liness,nand_g,and_g,nor_g,or_g,not_g,buff,inputs,outputs,paths,kilobytes,FC,FD,THR in zip(circuits,y,lines,nand,andd,nor,orr,nott,buff,inputt,output,paths,kbb,coverage,dropping,parallel):
+		file.write(name + " & " + str(nand_g) + " & " + str(and_g)  + " & " + str(nor_g)  + " & " + str(or_g) + " & " + str(not_g)  + " & " + str(buff)  + " & " + str(inputs)  + " & " + str(outputs)  + " & " + str(paths)  + " & " + str(kilobytes) + " \\\ \n")
+		file.write("\hline\n")
 
 
 file.write("\end{tabular}\n")
 file.write("\end{center}\n")
 
 
-
-#########################################################
-
-# Write Latex Matrix
-
-file= open("Table1.tex","w") 
+# Fault Coverage
+file = open("Fault_Coverage.tex","w") 
 file.write("begin{center}\n")
-file.write("begin{tabular}{||c c c c c c c c c c||}\n")
+file.write("begin{tabular}{||c c c||}\n")
 file.write("\hline\n")
-file.write("Circuit & NAND & AND & NOR & NOT & BUFF & PI & PO & Paths & KB  \\\ [0.5ex] \n")
+file.write("Circuit & Fault Coverage (\%) & Test Vector \\\ [0.5ex] \n")
 file.write("\hline\hline\n")
 
 
-for f, b,lin,na,a,nr,nt,bf,inp,out,pth,kk,cov,mode,par in zip(circuits, y,lines,nand,andd,nor,nott,buff,inputt,output,paths,kbb,coverage,dropping,parallel):
-        #print(f, b)
-        file.write(" " + f + "" + " & "+ ""+str(na)+" & "+str(a)+" & "+str(nr)+" & "+str(nt)+" & "+str(bf)+" & " + str(inp) +" & " + str(out) +" & "+str(pth) + " & " + str(kk) + "" +"" " \\\ \n")
-        file.write("\hline\n")
+for name,FC,test_name in zip(circuits,coverage,test):
+		file.write(name + " & " + str(FC) + " \% " +" & " + str(test_name) + " \\\ \n")
+		file.write("\hline\n")
 
 
 file.write("\end{tabular}\n")
 file.write("\end{center}\n")
 
 
-
-#########################################################
-# Write Latex Matrix
-
-file= open("Table2.tex","w") 
+# Performance
+file = open("Performance1.tex","w") 
 file.write("begin{center}\n")
-file.write("begin{tabular}{||c c c c c||}\n")
+file.write("begin{tabular}{||c c c c||}\n")
 file.write("\hline\n")
-file.write("Circuit & Time (s) & FC(\%) & FD & Thr & Test \\\ [0.5ex] \n")
+file.write("Circuit & Serial (s) & Parallel & Speedup \\\ [0.5ex] \n")
 file.write("\hline\hline\n")
 
 
-for f, b,lin,na,a,nr,nt,bf,inp,out,pth,kk,cov,mode,par,tst in zip(circuits, y,lines,nand,andd,nor,nott,buff,inputt,output,paths,kbb,coverage,dropping,parallel,test):
-        #print(f, b)
-        file.write(" " + f + " & " + str(b) +  " & "+ cov[:-2] + "\%" + " & " + mode + " & " + par +" & " + tst +" \\\ \n")
-        file.write("\hline\n")
+
+names = []
+FD_Increase = []
+
+circuit_set = set(circuits)
+print(len(circuit_set))
+
+for i in circuit_set:
+	parallel_time = ""
+	serial_time = ""
+	test_vector = ""
+	for name,threads,FD,test_name,time in zip(circuits,parallel,dropping,test,y):
+		#print("(" + FD + ")")
+		if name == i and FD == "NO " and ".vec" in test_name:
+			#print("("+threads+")")
+			if threads == "4 ":			
+				parallel_time = time;
+				test_vector = test_name;
+
+			if threads == "1 ":
+				serial_time = time;
+				test_vector = test_name;
+	
+	if serial_time:
+		names.append(i)
+		FD_Increase.append(int(100*serial_time/parallel_time))
+		file.write(i + " & " + str(serial_time) + " & " + str(parallel_time) + " & " + str(int(100*serial_time/parallel_time)) + " \% \\\ \n")
+		file.write("\hline\n")
 
 
 file.write("\end{tabular}\n")
 file.write("\end{center}\n")
 
 
-
-#########################################################
-
-
-import sys
-sys.exit(1) # Or something that calls sys.exit().
+###############################################################
 
 
-import numpy as np
-import matplotlib.pyplot as plt
+# Performance
+file = open("Performance2.tex","w") 
+file.write("begin{center}\n")
+file.write("begin{tabular}{||c c c c||}\n")
+file.write("\hline\n")
+file.write("Circuit & Not FD (s) & FD (s) & Speedup \\\ [0.5ex] \n")
+file.write("\hline\hline\n")
+
+circuit_set = set(circuits)
+print(len(circuit_set))
+
+for i in circuit_set:
+	FD_time = ""
+	NFD_time = ""
+	test_vector = ""
+	for name,threads,FD,test_name,time in zip(circuits,parallel,dropping,test,y):
+		#print("(" + FD + ")")
+		if name == i and threads == "1 " and ".vec" in test_name:
+			#print("("+threads+") " + FD)
+			if FD == "YES ":			
+				FD_time = time;
+				test_vector = test_name;
+
+			if FD == "NO ":
+				NFD_time = time;
+				test_vector = test_name;
+	
+	if NFD_time:
+		file.write(i + " & " + str(NFD_time) + " & " + str(FD_time) + " & " + str(int(100*NFD_time/FD_time))+" \% \\\ \n")
+		file.write("\hline\n")
 
 
-coverage_int = []
+file.write("\end{tabular}\n")
+file.write("\end{center}\n")
 
 
-for i in coverage:
-	coverage_int.append(float(i[:-2]))
+###############################################################
 
-
-x = range(len(circuits))
-pylab.xticks(x, circuits)
-plt.xlabel('Circuit Name')
-plt.ylabel('Fault Coverage (%)')
-plt.title('ECE 307 Project')
-plt.plot(circuits,coverage_int)
-
-plt.legend(['FC'])
-#plt.grid(axis='y')
-plt.grid(axis='x')
-plt.show()
-
-
-
-
-
-
-x = range(len(circuits))
-pylab.xticks(x, circuits)
-plt.xlabel('ISCAS89')
-plt.ylabel('# of Gates')
-plt.title('ECE 307 Project')
-plt.plot(circuits,nand)
-plt.plot(circuits,andd)
-plt.plot(circuits,orr)
-plt.plot(circuits,nor)
-plt.plot(circuits,nott)
-plt.plot(circuits,buff)
-plt.plot(circuits,inputt)
-plt.plot(circuits,output)
-
-plt.legend(['NAND','AND','OR','NOT','BUFF','PI','PO'])
-#plt.grid(axis='y')
-plt.grid(axis='x')
-plt.show()
 
