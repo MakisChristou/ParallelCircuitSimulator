@@ -10,15 +10,15 @@
 \maketitle
 
 \section*{Introduction}
-The purpose of this project is to write a fault simulator in C++ that has both parallel and serial modes of operation. The goal is to examine the speedup of the parallel implementation compared to the serial version as well as compare any potantial speeups that can occur with or without fault dropping in both cases.
+The purpose of this project is to write a fault simulator in C++ that supports both parallel and serial modes of operation. The goal is to examine the speedup of the parallel implementation compared to the serial version as well as compare any potential performance increases that might occur with or without fault dropping in both cases.
 
 
-\section*{Backround}
+\section*{Background}
 \subsection*{Single Stuck at Fault Model}
-Faults in circuits can be modeled in many ways. The model that was used for the purposes of this project was the single stuck at fault model. In this case the circuit, which is a gate level netlist, has only one faulty line that is either stuck permanently at $1$ or $0$ and the fault can be at an input or output of a gate. The number of possible fault sites in a given netlist is $\# PI + \#GATES + \#(fanout branches)$ and subsequentltly since a fault site has 2 potential faults, the number of possible faults in a circuit is $2 \cdot \#(fault sites)$. 
+Faults in circuits can be modeled in many ways. The model that was used for the purposes of this project was the single stuck at fault model. In this case the circuit, which is a gate level netlist, has only one faulty line that is either stuck permanently at $1$ or $0$ and the fault can be at an input or output of a gate. The number of possible fault sites in a given netlist is $\# PI + \#GATES + \#(fanout branches)$ and subsequently since a fault site has 2 potential faults, the number of possible faults in a circuit is $2 \cdot \#(fault sites)$. 
 
 \subsection*{Fault Equivalence}
-Despite a circuit having a maximum number of possible stuck at faults, using some mechanisms we can choose a subset of these faults and if we are able to detect these it means that we can also detect the ones we skipped. For example, fault equivalence means that two faults $f_1, f_2$ are equivalent if all tests that detect $f_1$ also detect $f_2$ and vice versa. This means that if we are able to detect one of the two faults then we know doe sure that we can detect the other. Thus we can keep only one of these equivalent faults in our list. This is called fault collapsing. The results is a collapsed fault set that contains one fault from each equivalence subset.
+Despite a circuit having a maximum number of possible stuck at faults, using some mechanisms we can choose a subset of these faults and if we are able to detect these it means that we can also detect the ones we skipped. For example, fault equivalence means that two faults $f_1, f_2$ are equivalent if all tests that detect $f_1$ also detect $f_2$ and vice versa. This means that if we are able to detect one of the two faults then we know for sure that we can detect the other as well. Thus we can keep only one of these equivalent faults in our list. This is called fault collapsing. The result is a collapsed fault set that contains one fault from each equivalence subset.
 
 \subsection*{Fault Dominance}
 The definition of fault dominance is as follows, if all tests of some fault $f_1$ detect another fault $f_2$ then $f_2$ is said to dominate $f_1$. The rule that we use is if fault $f_2$ dominates $f_1$ then $f_2$ is removed from the fault list.
@@ -31,7 +31,7 @@ Fault simulation is done in order to detect possible faults in a Boolean circuit
 
 $$FC = \frac{\#fd}{\#tf}$$
 
-The pseudocode for the serial algorithm is depicted below.
+The pseudo-code for the serial algorithm is depicted below.
 
 \begin{algorithm}
 	\caption{Serial Fault Simulation} 
@@ -56,7 +56,7 @@ The pseudocode for the serial algorithm is depicted below.
 \clearpage
 
 \section*{Implementation}
-This section is dedicated to explain the details and inner workings of the specific C++ implementation. The code is designed to parse \texttt{.bench} files that represent gate level netlists as well as test vectors of different formats. Then the code generates all faults according to the Checkpoint Theorem. Depending on the user input the program either runs the serial algorithm or parallel with or without fault dropping. By utilizing bash scripts the simulator can be used via it's command line arguments. The following in how a collection of bash scripts and the simulator program work together to produce the results.
+This section is dedicated to explaining the details and inner workings of the C++ implementation. The code is designed to parse \texttt{.bench} files that represent gate level netlists as well as test vectors of different formats. Then the code generates all faults according to the Checkpoint Theorem. Depending on the user input the program either runs the serial algorithm or parallel with or without fault dropping. By utilizing bash scripts the simulator can be used via it's command line arguments. The following diagram shows how a collection of bash scripts and the simulator program work together to produce the necessary results.
 
 \begin{figure}[h]  
   \centering
@@ -69,42 +69,44 @@ This section is dedicated to explain the details and inner workings of the speci
 The netlist is internally represented as a DAG (Directed Acyclic Graph). Specifically, since the purpose of the program is to simulate faults, the graph model that was chosen was $G_2$. This model uses one graph node per circuit line and one edge per pair of gates/fanout stems with direct connection, in order to explicitly represent fanout stems. This is necessary in this case because faults could happen in any circuit line thus explicit representation of every line is needed. The data structure used in this case was a $1-D$ array with linked lists, since generally speaking, Boolean circuits are sparse thus more memory is saved compared to using a $2-D$ array. 
 
 \subsection*{Parallelizing Fault Simulation}
-When parallelizing algorithms a lot has to be considered. Data dependencies is one aspect that leads to race conditions which in turn, leads to unpredictable code behaviour. In this case, the most important part of parallelizing the algorithm is to ensure that no data dependencies or race conditions would occur. In this case this was achieved easily by splitting the work in equal chunks to $N$ threads. Since each iteration is almost fully independent splitting the workflow to any number of threads was trivial once the serial algorithm was implemented. The workflow was split as follows: Each thread received a subset of the test vector set, then independently worked on identifying all faults that were previously generated with the checkpoint theorem and stored in a global variable. When using fault dropping threads that detect faults need to modify a global variable (that stores faults) in order to save time for other threads. To ensure that threads would not interfere with one another the global data structure was protected with a mutex since it was part of a critical region, but this was only a problem when using fault dropping. Without fault dropping each thread can work fully independent from any other one.
+When parallelizing algorithms a lot of factors have to be considered. Data dependencies is one aspect that leads to race conditions which in turn, leads to unpredictable code behavior. In this case, the most important part of parallelizing the algorithm is to ensure that no data dependencies or race conditions would occur. In this case this was achieved easily by splitting the work in equal chunks to $N$ threads. Since each iteration is almost fully independent splitting the workflow to any number of threads is trivial once the serial algorithm is implemented. The workflow is split as follows: Each thread receives a subset of the test vector set, then independently workes on identifying all faults that were previously generated with the checkpoint theorem and stored in a global variable. When using fault dropping, threads that detect faults need to modify a global variable (that stores faults) in order to save time for other threads. To ensure that threads would not interfere with one another the global data structure was protected with a mutex since it was part of a critical region, but this was only a problem when using fault dropping. Without fault dropping each thread can work fully independent from any other one.
 
 \clearpage
 
 
 \section*{CLI Arguments}
 
-Then the simulator is used in the following fashion it just uses the benchmark file and corresponding input file given by the user, computes the fault coverage in serial mode and prints useful statistics in stdout including the fault coverage. This is the most basic usage. 
+One of the aspects of this project is to run many simulations with different input files and settings. Due to this necessity, the simulator is implemented to use command line arguments that control it's functionality. Below a list of all command line options is shown and each argument is explained with example usage.
+\\\\
+When the simulator is used in the following fashion it just uses the benchmark file and corresponding input file given by the user, computes the fault coverage in serial mode and prints useful statistics in stdout including the fault coverage. This is the most basic usage. 
 \\\\ \texttt{./simulator -C <benchmark\_path> -I <test\_path> -S} \\\\
-The \texttt{-S} parameter can be combined with the \texttt{-T <[s],[ms],[us],[ns]>} argument in order to get the total runtime of the program as well as the netlist stats in stdout. The user can also choose the time unit. The next example prints netlist stats as well as the total runtime in seconds.
+The \texttt{-S} parameter can be combined with the \texttt{-T <[s],[ms],[us],[ns]>} argument in order to get the total run-time of the program as well as the netlist stats in stdout. The user can also choose the time unit. The next example prints netlist stats as well as the total runtime in seconds.
 \\\\ \texttt{./simulator -C <benchmark\_path> -I <test\_path> -S -T s} \\\\
 Apart from computing the fault coverage the simulator can output the test vector that detected faults in a txt file via the \texttt{-H} argument. The usage in this case is as expected. 
 \\\\ \texttt{./simulator -C <benchmark\_path> -I <test\_path> -H} \\\\
 The next argument tells the simulator in which mode to run (serial or parallel) and to how many threads to allocate the work. If no number of theads is given then the simulator chooses the maximum number of concurrent threads supported by the CPU. In this instance the simulator will run in parallel on 8 threads.
 \\\\ \texttt{./simulator -C <benchmark\_path> -I <test\_path> -P 8} \\\\
-Another useful argument is \texttt{-D} which enables fault dropping mode. This can dramatically decrease the simualtion time while still giving out correcr results. It's an optimization step that is useful for comparing test vector quality.
+Another useful argument is \texttt{-D} which enables fault dropping mode. This can dramatically decrease the simulation time while still giving out correct results. It's an optimization step that is useful for comparing test vector quality.
 \\\\ \texttt{./simulator -C <benchmark\_path> -I <test\_path> -D} \\\\
 \clearpage
-An argument that doesn't change the functionality of the simulator but comes in handy when working wit large netlists is the \texttt{-B} option. This option gives user feedback about the progress of the simulator, estimated execution time and how many test vectors per second are applied to the netlist. The argument is used like so:
+An argument that doesn't change the functionality of the simulator but comes in handy when working wit large netlists is the \texttt{-B} option. This option gives user feedback about the progress of the simulator, estimated execution time and how many input patterns per second are applied to the netlist. The argument is used like so: 
 \\\\ \texttt{./simulator -C <benchmark\_path> -I <test\_path> -B} \\\\
 For example, by running the simulator with the following arguments:
 \\\\ \texttt{./simulator -C s5378.bench -I s5378.vec -B} \\\\
 We get the following output:
-\\\\ \texttt{[100 P/s][total 0][0\% done][100\% in 74 min]} \\\\
+\\\\ \texttt{[100 P/s][total 0][0\% done][100\% in 75 min]} \\\\
 But when running the simulator in parallel:
 \\\\ \texttt{./simulator -C s5378.bench -I s5378.vec -B -P 8} \\\\
 We get the following:
 \\\\\texttt{[500 P/s][total 0][0\% done][100\% in 15 min]}\\\\
-This is great for user feedback as well as a quick first look of how well the work is parallelized. I this case we can clearly see that when using the parallel mode, the simulator will finish approximately 5 times faster. Do note that all arguments can be combined. In the following example the simulator will output stats as well as total runtime in stdout when it's done, use fault dropping and run in parallel on 8 concurrent threads.
+This is great for user feedback as well as a quick first look of how well the work is parallelized. I this case we can clearly see that when using the parallel mode, the simulator will finish approximately 5 times faster. Do note that all arguments can be combined. In the following example the simulator will output stats as well as total run-time in stdout when it's done, use fault dropping and run in parallel on 8 concurrent threads.
 \\\\ \texttt{./simulator -C <benchmark\_path> -I <test\_path> -T s -S -D -P 8} \\\\
 
 \clearpage 
 
 \section*{Netlist Statistics}
 
-The table below shows some useful netlist statiastics for all benchmark circuits. The table includes circuit data from both ISCAS85 and ISCAS89 benchmarks.
+The table below shows some useful netlist statistics for all benchmark circuits. The table includes circuit data from both ISCAS85 and ISCAS89 benchmarks.
 
 
 \begin{center}
@@ -397,7 +399,7 @@ c7552 & 98.33 \%  & c7552.vec \\
 \clearpage
 \section*{Random Test Vectors}
 
-The following results were obtained with the randomly generated test vectors that the simulator can produce. The fault coverage is depicted for each circuit is depicted below.
+The following results were obtained with the randomly generated test vectors that the simulator can produce. The fault coverage for each circuit is depicted below.
 
 \begin{center}
 \begin{tabular}{||c c c||}
@@ -490,7 +492,7 @@ c7552 & 83.22 \%  & c7552.rand.txt \\
 \clearpage
 
 \section*{Serial vs Parallel}
-The program was tested on an Intel i3-4170 with a frequency of 3.7GHz. The specific model is a dual core processor with hyperthreading yielding 4 logical threads that the simulator can take advantage of.The following simulations were run with Test Suite 1 for ISCAS-89 and Test Suite 2 for ISCAS-85. Another factor to consider is that the simulations were run without utilizing fault dropping.
+To compare serial vs parallel modes the program was run on an Intel i3-4170 with a frequency of 3.7GHz. The specific model is a dual core processor with hyperthreading yielding 4 logical threads that the simulator can take advantage of. The following simulations were run with Test Suite 1 for ISCAS-89 and Test Suite 2 for ISCAS-85, in other words the \texttt{*.vec} files were used. Another factor to consider is that the simulations were run without utilizing fault dropping.
 
 \begin{center}
 \begin{tabular}{||c c c c||}
@@ -564,10 +566,7 @@ c5315 & 2197.81 & 1060.8 & 207 \% \\
 c6288 & 1004.8 & 488.657 & 205 \% \\ 
 \hline
 c7552 & 8340.21 & 3794.6 & 219 \% \\ 
-\hline
-
-
-
+\hline\hline
 
 
 \end{tabular}
@@ -577,7 +576,7 @@ c7552 & 8340.21 & 3794.6 & 219 \% \\
 
 \section*{Fault Dropping}
 
-The results below were obtained by running the simulator on a single thread with and without fault dropping. Just like in the previous comparison, the simulator was run with Test Suite 1 for ISCAS-89 and Test Suite 2 for ISCAS-85.  
+The results below were obtained by running the simulator on a single thread with and without fault dropping. Just like in the previous comparison, the simulator was run with Test Suite 1 for ISCAS-89 and Test Suite 2 for ISCAS-85. 
 
 
 \begin{center}
@@ -653,16 +652,31 @@ c6288 & 1004.8 & 287.604 & 349 \% \\
 \hline
 c7552 & 8340.21 & 1386.35 & 601 \% \\ 
 \hline
-
-
-
-
-
-
 \end{tabular}
 \end{center}
 
 
+\iffalse 
+\clearpage
+Due to their size, as well as some technical issues, some circuits were only simulated by utilizing fault dropping in serial mode in order to obtain the fault coverage of their corresponding vectors. The table below illustrates the results
+\begin{center}
+\begin{tabular}{||c c||}
+\hline
+Circuit & FD (s) \\ [0.5ex] 
+\hline\hline
+s13207 & 23373.3  \\
+\hline
+s15850 & 14769.7 \\
+\hline
+s38417 & 57380.9 \\
+\hline
+s38584 & 105464\\
+\hline
+s35932 & 16870.9 \\
+\hline
+\end{tabular}
+\end{center}
+\fi
 
 \clearpage
 
@@ -696,6 +710,79 @@ The figures below compare the performance increase for a subset of the ISCAS-89 
 
 \clearpage
 \section*{Conclusions}
-As we can see, the program achieves roughly 200 \% speedup when running in 4 parallel threads compared to running on a single one. Despite not reaching the theoritical maximum of 400 \% a noticable performance increase was observed. Many factors could be limiting the performance increase. One of them is the fact that when a thread detects a single stuck at fault, it accesses a global variable where all detected faults are stored. If the data structure is in use by another thread, then the thread blocks. This is a limiting factor of the current implementation. When looking at the comparison with and without fault dropping a different trend is observed. Specifically, some circuit/test set pairs have a lot more speedup than others. This can be explained by the fact that the potential increase in speed depends solely on how good is the test vector set at detecting stuck at faults. If set of test vectors contains bitstrings that detect only s small number or no faults at all, then more no faults are dropped from the list thus the runtime of the program approaches the one without fault dropping.
+As we can see, the program achieves roughly 200 \% speedup when running in 4 parallel threads compared to running on a single one. Despite not reaching the theoritical maximum of 400 \% a noticable performance increase was observed. Many factors could be limiting the performance increase. One of them is the fact that when a thread detects a single stuck at fault, it accesses a global variable where all detected faults are stored. If the data structure is in use by another thread, then the thread blocks. This is a limiting factor of the current implementation. When looking at the comparison with and without fault dropping a different trend is observed. Specifically, some circuit/test set pairs have a lot more speedup than others. This can be explained by the fact that the potential performance increase depends solely on how good each test set is at detecting stuck at faults. Finally, when looking at the results obtained with the random test vectors, we can clearly see that indeed, just as expected, the fault coverage is roughtly between 60\% - 90\%.
+
+\iffalse
+\begin{algorithm}
+	\caption{Bruteforce Reliability} 
+	\begin{algorithmic}[1]
+		\State C = getComponentNumber()
+		\State S = getSeconds()
+		\State G [ ] = randGraph($|C|$)
+		\State T[ ] = getTimesteps($|S|$)
+		\State R = 0
+		\State N = $2^{|C|}$
+		\State Result[ ]
+		\For {t in T [ ]}
+			\For {i = 0 to N}
+				\If {isPath(G)}
+					\State R = R + calcReliability(i,t)
+				\Else
+					\State R = R + 0
+				\EndIf	
+			\EndFor
+		\State Result.append(R,t)
+		\EndFor
+		
+		\State \textbf{return} Result
+	\end{algorithmic} 
+\end{algorithm}
+
+
+\begin{algorithm}
+	\caption{Upper Bound Approximation} 
+	\begin{algorithmic}[1]
+		\State C = getComponentNumber()
+		\State S = getSeconds()
+		\State G [ ] = randGraph($|C|$)
+		\State T[ ] = getTimesteps($|S|$)
+		\State R = 1
+		\State N = $2^{|C|}$
+		\State Result[ ]
+		\State Paths[ ] = getAllpaths(G)
+		\For {t in T [ ]}
+			\For {path in Paths[ ]}
+				\State R = R $\cdot$ calcReliability(t) 
+			\EndFor
+		\State Result.append(1-R,t)
+		\EndFor
+		
+		\State \textbf{return} Result
+	\end{algorithmic} 
+\end{algorithm}
+
+
+\begin{algorithm}
+	\caption{Lower Bound Approximation} 
+	\begin{algorithmic}[1]
+		\State C = getComponentNumber()
+		\State S = getSeconds()
+		\State G [ ] = randGraph($|C|$)
+		\State T[ ] = getTimesteps($|S|$)
+		\State R = 0
+		\State N = $2^{|C|}$
+		\State Result[ ]
+		\State Paths[ ] = getAllpaths(G)
+		\For {t in T [ ]}
+			\For {path in Paths[ ]}
+				\State R = R + calcReliability(t) 
+			\EndFor
+		\State Result.append($\frac{R}{|Paths|}$,t)
+		\EndFor
+		
+		\State \textbf{return} Result
+	\end{algorithmic} 
+\end{algorithm}
+\fi
 
 \end{document}
